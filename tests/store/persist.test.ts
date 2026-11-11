@@ -7,7 +7,7 @@ vi.mock('idb-keyval', async (orig) => {
   return { ...real, set: vi.fn(real.set), get: vi.fn(real.get) };
 });
 
-import { listBackups, loadDataset, pushBackup, saveDataset, setStore } from '../../src/store/persist';
+import { getCorrupt, listBackups, loadDataset, pushBackup, saveDataset, setStore } from '../../src/store/persist';
 import { act, app, flushSaves, init, replaceDataset } from '../../src/store/app.svelte';
 import { addEntry, addPublication, emptyDataset, startCount } from '../../src/domain/dataset';
 
@@ -32,6 +32,28 @@ describe('persist', () => {
     expect(await loadDataset()).toBeNull();
     expect(await listBackups()).toEqual([]);
     expect(await get('corrupt', store)).toEqual({ junk: true });
+  });
+
+  it('getCorrupt returns the raw payload, or undefined when there is none', async () => {
+    const store = createStore(`g${n++}`, 'kv');
+    setStore(store);
+    expect(await getCorrupt()).toBeUndefined();
+    await set('dataset', { junk: true }, store);
+    await loadDataset();
+    expect(await getCorrupt()).toEqual({ junk: true });
+  });
+
+  it('init does not overwrite unreadable data when it cannot be kept in the corrupt slot', async () => {
+    const store = createStore(`k${n++}`, 'kv');
+    setStore(store);
+    await set('dataset', { junk: true }, store);
+    vi.mocked(set).mockClear();
+    vi.mocked(set).mockRejectedValueOnce(new Error('quota'));
+    await init();
+    expect(app.saveState).toBe('unavailable');
+    act(() => 0);
+    await flushSaves();
+    expect(await get('dataset', store)).toEqual({ junk: true });
   });
 
   it('backups keep last 5', async () => {

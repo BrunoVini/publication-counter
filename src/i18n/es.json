@@ -226,6 +226,7 @@
   "set.cloud": "Nube",
   "set.cloudSoon": "Google Drive: próximamente",
   "set.data": "Datos",
+  "set.exportCorrupt": "Exportar datos ilegibles",
   "set.handover": "Pasar datos a otra persona",
   "set.open": "Abrir archivo recibido",
   "set.openTitle": "¿Reemplazar los datos actuales?",

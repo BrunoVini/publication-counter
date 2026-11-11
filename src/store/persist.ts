@@ -30,8 +30,14 @@ export async function loadDataset(): Promise<Dataset | null> {
   const r = parseDataset(JSON.stringify(raw));
   if (r.ok) return r.dataset;
   // NOTE: single slot, newest overwrites; kept apart so `backups` only holds valid datasets.
-  try { await set('corrupt', raw, kv()); } catch { /* best effort */ }
+  // NOTE: when it cannot be kept, this throws so init stays memory-only instead of overwriting `dataset`.
+  await set('corrupt', raw, kv());
   return null;
+}
+
+/** The raw value of the last unreadable dataset, if any. */
+export async function getCorrupt(): Promise<unknown | undefined> {
+  try { return await get<unknown>('corrupt', kv()); } catch { return undefined; }
 }
 
 export async function saveDataset(ds: Dataset): Promise<boolean> {

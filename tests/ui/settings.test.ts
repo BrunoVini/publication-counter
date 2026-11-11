@@ -11,6 +11,7 @@ vi.mock('../../src/ui/shared/fileio', async (orig) => {
 import SettingsScreen from '../../src/ui/settings/SettingsScreen.svelte';
 import ScaleEditor from '../../src/ui/settings/ScaleEditor.svelte';
 import { app, flushSaves } from '../../src/store/app.svelte';
+import { set } from 'idb-keyval';
 import { setStore, listBackups } from '../../src/store/persist';
 import { emptyDataset } from '../../src/domain/dataset';
 import { serializeDataset } from '../../src/domain/file';
@@ -148,5 +149,27 @@ describe('settings screen', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'How it works' }));
     expect(document.body.textContent).toContain('489 g / 200 = 2.445 g');
     expect(document.body.textContent).toContain('5,280');
+  });
+});
+
+describe('unreadable data export', () => {
+  test('hidden without a corrupt payload', async () => {
+    render(SettingsScreen);
+    await Promise.resolve();
+    expect(screen.queryByRole('button', { name: 'Export unreadable data' })).toBeNull();
+  });
+
+  test('shown when a corrupt payload exists and shares it as JSON', async () => {
+    const store = createStore(`cx${n++}`, 'kv');
+    setStore(store);
+    await set('corrupt', { junk: 1 }, store);
+    vi.mocked(shareOrDownload).mockClear();
+    render(SettingsScreen);
+    await fireEvent.click(await screen.findByRole('button', { name: 'Export unreadable data' }));
+    await waitFor(() => expect(shareOrDownload).toHaveBeenCalled());
+    const [name, text, mime] = vi.mocked(shareOrDownload).mock.calls[0];
+    expect(name).toMatch(/\.json$/);
+    expect(JSON.parse(text as string)).toEqual({ junk: 1 });
+    expect(mime).toBe('application/json');
   });
 });

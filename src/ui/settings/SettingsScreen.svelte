@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { act, app, replaceDataset } from '../../store/app.svelte';
-  import { listBackups, type Backup } from '../../store/persist';
+  import { getCorrupt, listBackups, type Backup } from '../../store/persist';
   import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { exportFileName, parseDataset, serializeDataset } from '../../domain/file';
   import { fromGrams } from '../../domain/units';
@@ -26,13 +26,14 @@
   let pendingText = '';
   let error = $state('');
   let backups = $state<Backup[]>([]);
+  let corrupt = $state<unknown>(undefined);
 
   const settings = $derived(app.ds.settings);
   const today = () => new Date().toISOString().slice(0, 10);
   const num = (g: number) => fmtNumber(fromGrams(g, settings.unit), 3);
   const when = (iso: string) => `${fmtDate(iso)} ${new Date(iso).toLocaleTimeString(i18n.lang, { hour: '2-digit', minute: '2-digit' })}`;
   const reason = (r: string) => { const k = `set.reason.${r}`; const m = t(k); return m === k ? r : m; };
-  const refresh = async () => { backups = await listBackups(); };
+  const refresh = async () => { backups = await listBackups(); corrupt = await getCorrupt(); };
   onMount(refresh);
 
   function chooseTheme(th: Theme) { act((ds) => { ds.settings.theme = th; }); applyTheme(th); }
@@ -48,6 +49,11 @@
   async function handover() {
     try {
       await shareOrDownload(exportFileName(app.ds, today()), serializeDataset($state.snapshot(app.ds) as Dataset), 'application/json');
+    } catch { showToast(t('set.handoverErr')); }
+  }
+  async function exportCorrupt() {
+    try {
+      await shareOrDownload(`pubcount-unreadable-${today()}.json`, JSON.stringify(corrupt, null, 2), 'application/json');
     } catch { showToast(t('set.handoverErr')); }
   }
   async function replaceWith(run: () => Promise<string>) {
@@ -154,6 +160,9 @@
         <button type="button" onclick={handover}>{t('set.handover')}</button>
         <button type="button" onclick={openFile}>{t('set.open')}</button>
       </div>
+      {#if corrupt !== undefined}
+        <button type="button" onclick={exportCorrupt}>{t('set.exportCorrupt')}</button>
+      {/if}
       {#if error}<p class="bad" role="alert">{error}</p>{/if}
       <h3>{t('set.restore')}</h3>
       {#if backups.length === 0}

@@ -226,6 +226,7 @@
   "set.cloud": "Cloud",
   "set.cloudSoon": "Google Drive: coming soon",
   "set.data": "Data",
+  "set.exportCorrupt": "Export unreadable data",
   "set.handover": "Hand over data to another person",
   "set.open": "Open received file",
   "set.openTitle": "Replace current data?",
