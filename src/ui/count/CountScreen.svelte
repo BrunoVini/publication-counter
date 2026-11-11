@@ -1,12 +1,16 @@
 <script lang="ts">
   import { app, act } from '../../store/app.svelte';
-  import { fmtDate, fmtNumber, t } from '../../i18n/index.svelte';
+  import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { openCount, startCount } from '../../domain/dataset';
   import { itemTotal } from '../../domain/calc';
   import { identityKey } from '../../domain/text';
+  import { languageName, loadLanguages } from '../../domain/languages.svelte';
   import type { CountItem } from '../../domain/types';
   import { showToast } from '../shared/Toast.svelte';
   import ItemPanel from './ItemPanel.svelte';
+
+  void loadLanguages();
+  const langName = (code: string) => languageName(code, i18n.lang);
 
   // NOTE: jsdom has no matchMedia; without it the layout defaults to phone.
   let desktop = $state(false);
@@ -53,7 +57,7 @@
     return count.items.flatMap((item) => {
       const pub = app.ds.publications.find((p) => p.id === item.publicationId);
       if (!pub) return [];
-      if (q && !norm(`${pub.name} ${pub.language} ${pub.variant}`).includes(q)) return [];
+      if (q && !norm(`${pub.name} ${langName(pub.language)} ${pub.variant}`).includes(q)) return [];
       return [{ item, pub, status: statusOf(item) }];
     });
   });
@@ -157,7 +161,7 @@
             <button type="button" class="row" class:selected={selectedId === pub.id} aria-expanded={app.openItemId === pub.id} onclick={() => toggle(pub.id)}>
               <span class="main">
                 <strong>{pub.name}</strong>
-                <span class="muted">{[pub.language, pub.variant].filter(Boolean).join(' · ')}</span>
+                <span class="muted">{[langName(pub.language), pub.variant].filter(Boolean).join(' · ')}</span>
               </span>
               <span class="status {status.kind}">
                 <span aria-hidden="true">{icons[status.kind]}</span>

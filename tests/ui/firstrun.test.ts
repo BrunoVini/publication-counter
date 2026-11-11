@@ -8,6 +8,7 @@ import { i18n } from '../../src/i18n/index.svelte';
 import { serializeDataset } from '../../src/domain/file';
 import { createStore } from 'idb-keyval';
 import { setStore } from '../../src/store/persist';
+import { loadLanguages } from '../../src/domain/languages.svelte';
 import { openPubcountText, pickTextFile } from '../../src/ui/shared/fileio';
 
 vi.mock('../../src/ui/shared/fileio', async (orig) => {
@@ -25,7 +26,8 @@ beforeAll(() => {
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+  await loadLanguages();
   setStore(createStore(`fr${n++}`, 'kv')); app.ds = emptyDataset('first'); app.tab = 'settings'; app.pasteOpen = false; i18n.lang = 'pt'; });
 afterEach(async () => { cleanup(); await flushSaves(); i18n.lang = 'en'; app.tab = 'count'; });
 
@@ -114,5 +116,26 @@ describe('first run', () => {
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/backup/));
     expect(app.ds.datasetId).toBe('first');
     expect(app.ds.settings.firstRunDone).toBe(false);
+  });
+
+  test('the primary publication language is preselected from the UI language and saved', async () => {
+    render(App);
+    expect(((await screen.findByRole('radio', { name: 'Português (Brasil)' })) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.click(screen.getAllByRole('radio', { name: 'English' })[0]);
+    await waitFor(() => expect(i18n.lang).toBe('en'));
+    await waitFor(() => expect(screen.getAllByRole('radio', { name: 'English' }).length).toBe(2));
+    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(app.ds.settings.pubLanguage).toBe('E');
+    expect(app.ds.settings.pubLanguages).toEqual([]);
+  });
+
+  test('secondary languages are saved and optional', async () => {
+    render(App);
+    await screen.findByRole('radio', { name: 'Português (Brasil)' });
+    await fireEvent.input(screen.getAllByRole('searchbox')[1], { target: { value: 'ingles' } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^Inglês(·|$)/ }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(app.ds.settings.pubLanguage).toBe('T');
+    expect(app.ds.settings.pubLanguages).toEqual(['E']);
   });
 });

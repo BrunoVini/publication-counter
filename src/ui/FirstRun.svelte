@@ -4,10 +4,14 @@
   import type { Lang, WeightUnit } from '../domain/types';
   import { openPubcountText, pickTextFile } from './shared/fileio';
   import { isIosBrowser } from './shared/platform';
+  import { languageEntry, languagesLoaded, loadLanguages } from '../domain/languages.svelte';
+  import LanguagePicker from './shared/LanguagePicker.svelte';
 
   const langs: { code: Lang; name: string }[] = [
     { code: 'pt', name: 'Português' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
   ];
+  // Codes in the public languages list; Portuguese maps to the Brazilian variant.
+  const defaultPub: Record<Lang, string> = { pt: 'T', en: 'E', es: 'S' };
   const units: WeightUnit[] = ['g', 'kg', 'lb', 'oz'];
 
   // NOTE: simple heuristic: pounds only for US English devices, kilograms everywhere else.
@@ -19,6 +23,15 @@
   let step = $state<1 | 2 | 3>(1);
   let unit = $state<WeightUnit>(defaultUnit());
   let error = $state('');
+  let primary = $state('');
+  let others = $state<string[]>([]);
+  let primaryTouched = false;
+  void loadLanguages();
+  // NOTE: the preselection only applies once the list is loaded and knows the code, so an unknown code is never stored.
+  $effect(() => {
+    const code = defaultPub[i18n.lang];
+    if (!primaryTouched && languagesLoaded() && languageEntry(code)) primary = code;
+  });
   // NOTE: the language default only applies while the user has not picked a unit.
   let unitTouched = false;
   let heading = $state<HTMLHeadingElement>();
@@ -40,8 +53,9 @@
     act((ds) => { ds.settings.unit = u; });
   }
   function next() {
+    if (!primary) return;
     // NOTE: persist both choices even when the user never touched the controls.
-    act((ds) => { ds.settings.language = i18n.lang; ds.settings.unit = unit; });
+    act((ds) => { ds.settings.language = i18n.lang; ds.settings.unit = unit; ds.settings.pubLanguage = primary; ds.settings.pubLanguages = others.filter((c) => c !== primary); });
     step = isIos ? 2 : 3;
   }
   const finish = () => act((ds) => { ds.settings.firstRunDone = true; });
@@ -77,13 +91,18 @@
         <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /> {l.name}</label>
       {/each}
     </fieldset>
+    <p class="muted">{t('form.required')}</p>
+    <LanguagePicker mode="single" required legend={t('first.pubLanguage')} value={primary}
+      onchange={(c) => { primary = c; primaryTouched = true; }} />
+    <LanguagePicker mode="multi" legend={t('first.pubLanguages')} value={others} onchange={(v) => (others = v)} />
     <fieldset>
-      <legend>{t('first.unit')}</legend>
+      <legend>{t('first.unit')} <span aria-hidden="true">*</span></legend>
       {#each units as u (u)}
         <label><input type="radio" name="unit" checked={unit === u} onchange={() => chooseUnit(u)} /> {u}</label>
       {/each}
     </fieldset>
-    <button type="button" class="primary" onclick={next}>{t('first.next')}</button>
+    {#if !primary && languagesLoaded()}<p class="err" role="alert">{t('first.pubLanguage.required')}</p>{/if}
+    <button type="button" class="primary" disabled={!primary} onclick={next}>{t('first.next')}</button>
   {:else if step === 2}
     <h2 tabindex="-1" bind:this={heading}>{t('first.ios.title')}</h2>
     <p>{t('first.ios.steps')}</p>
@@ -108,5 +127,7 @@
   .col { display: grid; gap: 12px; }
   button { min-height: 44px; font-size: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
   button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+  .muted { color: var(--muted); margin: 0; }
+  button:disabled { opacity: 0.5; }
   .err { color: var(--bad); font-weight: 600; margin: 0; }
 </style>

@@ -3,10 +3,15 @@
   import { i18n, t } from '../../i18n/index.svelte';
   import { addPublication, archivePublication, copySample, updatePublication } from '../../domain/dataset';
   import { identityKey } from '../../domain/text';
+  import { languageName, loadLanguages } from '../../domain/languages.svelte';
   import { fromGrams, parseDecimal, toGrams } from '../../domain/units';
   import type { Publication } from '../../domain/types';
   import { errorMessage, parseWhole } from '../count/errors';
   import PasteListDialog from './PasteListDialog.svelte';
+  import LanguageSelect from '../shared/LanguageSelect.svelte';
+
+  void loadLanguages();
+  const langName = (code: string) => languageName(code, i18n.lang);
 
   // NOTE: jsdom has no matchMedia; without it the layout defaults to phone.
   let desktop = $state(false);
@@ -28,7 +33,7 @@
     units: string; weight: string; origUnits: string; origWeight: string; copyFrom: string; packSize: string; mode: 'weigh' | 'hand';
   }
   const blank = (name = ''): Form =>
-    ({ id: null, name, language: '', variant: '', units: '', weight: '', origUnits: '', origWeight: '', copyFrom: '', packSize: '', mode: 'weigh' });
+    ({ id: null, name, language: app.ds.settings.pubLanguage ?? '', variant: '', units: '', weight: '', origUnits: '', origWeight: '', copyFrom: '', packSize: '', mode: 'weigh' });
 
   // The draft from the count screen opens the form prefilled; it is consumed right away.
   let form = $state<Form | null>(app.pubDraftName !== null ? blank(app.pubDraftName) : null);
@@ -41,11 +46,10 @@
   const live = $derived(app.ds.publications.filter((p) => !p.archived));
   const archived = $derived(app.ds.publications.filter((p) => p.archived));
   const shown = $derived(
-    live.filter((p) => !query.trim() || norm(`${p.name} ${p.language} ${p.variant}`).includes(norm(query))),
+    live.filter((p) => !query.trim() || norm(`${p.name} ${langName(p.language)} ${p.variant}`).includes(norm(query))),
   );
   const distinct = (pick: (p: Publication) => string) =>
     [...new Set(app.ds.publications.map(pick).filter(Boolean))].sort();
-  const languages = $derived(distinct((p) => p.language));
   const variants = $derived(distinct((p) => p.variant));
   const withSample = $derived(app.ds.publications.filter((p) => p.sample && p.id !== form?.id));
 
@@ -130,20 +134,20 @@
 
 {#if form}
   <form class="panel" onsubmit={save} aria-label={t(form.id ? 'pubs.edit' : 'pubs.new')}>
+    <p class="muted">{t('form.required')}</p>
     <label class="field">
-      <span>{t('pubs.name')}</span>
-      <input maxlength="200" bind:value={form.name} autocomplete="off" aria-invalid={!!dupError} aria-describedby={dupError ? 'pub-dup' : undefined} />
+      <span>{t('pubs.name')} <span aria-hidden="true">*</span></span>
+      <input aria-required="true" maxlength="200" bind:value={form.name} autocomplete="off" aria-invalid={!!dupError} aria-describedby={dupError ? 'pub-dup' : undefined} />
     </label>
     {#if dupError}<p id="pub-dup" role="alert" class="err">{dupError}</p>{/if}
-    <label class="field">
+    <div class="field">
       <span>{t('pubs.language')}</span>
-      <input maxlength="200" list="pub-langs" bind:value={form.language} autocomplete="off" />
-    </label>
+      <LanguageSelect label={t('pubs.language')} bind:value={form.language} />
+    </div>
     <label class="field">
       <span>{t('pubs.variant')}</span>
       <input maxlength="200" list="pub-variants" bind:value={form.variant} autocomplete="off" />
     </label>
-    <datalist id="pub-langs">{#each languages as l (l)}<option value={l}></option>{/each}</datalist>
     <datalist id="pub-variants">{#each variants as v (v)}<option value={v}></option>{/each}</datalist>
 
     <fieldset>
@@ -162,7 +166,7 @@
           <select bind:value={form.copyFrom}>
             <option value="">{t('pubs.copyFrom.none')}</option>
             {#each withSample as p (p.id)}
-              <option value={p.id}>{[p.name, p.language, p.variant].filter(Boolean).join(' · ')}</option>
+              <option value={p.id}>{[p.name, langName(p.language), p.variant].filter(Boolean).join(' · ')}</option>
             {/each}
           </select>
         </label>
@@ -201,7 +205,7 @@
         <tr>
           {#if inline?.id === p.id}
             <td><input maxlength="200" aria-label={t('pubs.name')} bind:value={inline.name} /></td>
-            <td><input maxlength="200" aria-label={t('pubs.language')} list="pub-langs" bind:value={inline.language} /></td>
+            <td><LanguageSelect label={t('pubs.language')} bind:value={inline.language} /></td>
             <td><input maxlength="200" aria-label={t('pubs.variant')} list="pub-variants" bind:value={inline.variant} /></td>
             <td class="acts">
               <button type="button" class="primary" onclick={saveInline}>{t('pubs.save')}</button>
@@ -209,7 +213,7 @@
               {#if inline.error}<span role="alert" class="err">{inline.error}</span>{/if}
             </td>
           {:else}
-            <td>{p.name}</td><td>{p.language}</td><td>{p.variant}</td>
+            <td>{p.name}</td><td>{langName(p.language)}</td><td>{p.variant}</td>
             <td class="acts">
               <button type="button" onclick={() => (inline = { id: p.id, name: p.name, language: p.language, variant: p.variant, error: '' })}>{t('pubs.editRow')}</button>
               <button type="button" onclick={() => openForm(p)}>{t('pubs.details')}</button>
@@ -225,7 +229,7 @@
       <li>
         <button type="button" class="row" onclick={() => openForm(p)}>
           <strong>{p.name}</strong>
-          <span class="muted">{[p.language, p.variant].filter(Boolean).join(' · ')}</span>
+          <span class="muted">{[langName(p.language), p.variant].filter(Boolean).join(' · ')}</span>
         </button>
       </li>
     {/each}
@@ -240,7 +244,7 @@
     <ul class="list">
       {#each archived as p (p.id)}
         <li class="arch">
-          <span><strong>{p.name}</strong> <span class="muted">{[p.language, p.variant].filter(Boolean).join(' · ')}</span></span>
+          <span><strong>{p.name}</strong> <span class="muted">{[langName(p.language), p.variant].filter(Boolean).join(' · ')}</span></span>
           <button type="button" onclick={() => restore(p.id)}>{t('pubs.restore')}</button>
           {#if restoreErr?.id === p.id}<p role="alert" class="err">{restoreErr.msg}</p>{/if}
         </li>

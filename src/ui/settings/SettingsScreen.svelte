@@ -11,6 +11,7 @@
   import ConfirmDialog from '../shared/ConfirmDialog.svelte';
   import { showToast } from '../shared/Toast.svelte';
   import { openPubcountText, pickTextFile, shareOrDownload } from '../shared/fileio';
+  import LanguagePicker from '../shared/LanguagePicker.svelte';
   import ScaleEditor from './ScaleEditor.svelte';
   import HowItWorks from './HowItWorks.svelte';
   import CloudSection from './CloudSection.svelte';
@@ -39,6 +40,10 @@
 
   function chooseTheme(th: Theme) { act((ds) => { ds.settings.theme = th; }); applyTheme(th); }
   function chooseLang(l: Lang) { i18n.lang = l; act((ds) => { ds.settings.language = l; }); }
+  function choosePrimary(c: string) {
+    act((ds) => { ds.settings.pubLanguage = c; ds.settings.pubLanguages = (ds.settings.pubLanguages ?? []).filter((x) => x !== c); });
+  }
+  function chooseOthers(v: string[]) { act((ds) => { ds.settings.pubLanguages = v; }); }
   function chooseUnit(u: WeightUnit) { act((ds) => { ds.settings.unit = u; }); }
   function saveLocation(e: Event) {
     const v = clean((e.currentTarget as HTMLInputElement).value);
@@ -147,6 +152,13 @@
       <label class="field">{t('set.location')}
         <input type="text" maxlength="200" value={settings.locationName ?? ''} onchange={saveLocation} />
       </label>
+    </section>
+
+    <section class="stack">
+      <h2>{t('set.pubLangs')}</h2>
+      <p class="muted">{t('form.required')}</p>
+      <LanguagePicker mode="single" required legend={t('set.pubLanguage')} value={settings.pubLanguage ?? ''} onchange={choosePrimary} />
+      <LanguagePicker mode="multi" legend={t('set.pubLanguages')} value={(settings.pubLanguages ?? []).filter((c) => c !== settings.pubLanguage)} onchange={chooseOthers} />
     </section>
 
     <section class="stack">

@@ -314,5 +314,20 @@
   "drive.delete": "Borrar copia de Drive y desconectar",
   "drive.deleteTitle": "¿Borrar la copia de Drive?",
   "drive.deleteMessage": "Esto elimina de forma permanente la carpeta \"Publication Counter\" y el archivo de copia que la app creó en tu Google Drive, y revoca el acceso de la app a tu cuenta de Google. Los datos de este dispositivo se conservan.",
-  "drive.deleteExpiredHint": "Reconecta primero para borrar la copia de Drive."
+  "drive.deleteExpiredHint": "Reconecta primero para borrar la copia de Drive.",
+  "form.required": "* obligatorio",
+  "first.pubLanguage": "Idioma principal de las publicaciones",
+  "first.pubLanguages": "Otros idiomas de las publicaciones (opcional)",
+  "first.pubLanguage.required": "Elija el idioma principal de las publicaciones para continuar.",
+  "lang.search": "Buscar idiomas",
+  "lang.none": "No se encontró ningún idioma.",
+  "lang.more": "Mostrando los primeros {count}. Escriba para filtrar.",
+  "lang.loading": "Cargando idiomas…",
+  "lang.other": "Otro idioma…",
+  "lang.otherTitle": "Elija un idioma",
+  "lang.addToMine": "Añadirlo también a mis otros idiomas",
+  "lang.use": "Usar este idioma",
+  "set.pubLangs": "Idiomas de las publicaciones",
+  "set.pubLanguage": "Idioma principal",
+  "set.pubLanguages": "Otros idiomas"
 }

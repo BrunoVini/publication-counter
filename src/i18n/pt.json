@@ -314,5 +314,20 @@
   "drive.delete": "Apagar backup do Drive e desconectar",
   "drive.deleteTitle": "Apagar o backup do Drive?",
   "drive.deleteMessage": "Isto apaga permanentemente a pasta \"Publication Counter\" e o arquivo de backup que o app criou no seu Google Drive, e revoga o acesso do app à sua conta Google. Os dados neste aparelho são mantidos.",
-  "drive.deleteExpiredHint": "Reconecte primeiro para apagar o backup do Drive."
+  "drive.deleteExpiredHint": "Reconecte primeiro para apagar o backup do Drive.",
+  "form.required": "* obrigatório",
+  "first.pubLanguage": "Idioma principal das publicações",
+  "first.pubLanguages": "Outros idiomas das publicações (opcional)",
+  "first.pubLanguage.required": "Escolha o idioma principal das publicações para continuar.",
+  "lang.search": "Buscar idiomas",
+  "lang.none": "Nenhum idioma encontrado.",
+  "lang.more": "Mostrando os primeiros {count}. Digite para filtrar.",
+  "lang.loading": "Carregando idiomas…",
+  "lang.other": "Outro idioma…",
+  "lang.otherTitle": "Escolha um idioma",
+  "lang.addToMine": "Adicionar também aos meus outros idiomas",
+  "lang.use": "Usar este idioma",
+  "set.pubLangs": "Idiomas das publicações",
+  "set.pubLanguage": "Idioma principal",
+  "set.pubLanguages": "Outros idiomas"
 }

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { app, act } from '../../store/app.svelte';
-  import { t } from '../../i18n/index.svelte';
+  import { i18n, t } from '../../i18n/index.svelte';
   import { addPublication } from '../../domain/dataset';
   import { identityKey, parsePastedList } from '../../domain/text';
+  import { languageByName, languageName, loadLanguages } from '../../domain/languages.svelte';
+  import LanguageSelect from '../shared/LanguageSelect.svelte';
   import { showToast } from '../shared/Toast.svelte';
   import { errorMessage } from '../count/errors';
 
@@ -13,9 +15,11 @@
   let text = $state('');
   let language = $state('');
   let error = $state('');
+  void loadLanguages();
 
-  // The most common language in the catalogue, or empty.
+  // The primary language, else the most common one in the catalogue, else empty.
   function commonLanguage(): string {
+    if (app.ds.settings.pubLanguage) return app.ds.settings.pubLanguage;
     const n = new Map<string, number>();
     for (const p of app.ds.publications) if (p.language) n.set(p.language, (n.get(p.language) ?? 0) + 1);
     return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
@@ -33,7 +37,7 @@
     // NOTE: archived publications are ignored, matching the domain's uniqueness rule.
     const known = new Set(app.ds.publications.filter((p) => !p.archived).map(identityKey));
     const seen = new Set<string>();
-    return parsePastedList(text, language.trim()).map((r) => {
+    return parsePastedList(text, language.trim(), languageByName).map((r) => {
       const key = identityKey(r);
       const status: Status = known.has(key) ? 'catalogue' : seen.has(key) ? 'paste' : 'new';
       seen.add(key);
@@ -65,21 +69,22 @@
   <div class="content">
     <h2 id="pl-title">{t('pubs.paste')}</h2>
     <p class="muted">{t('pubs.paste.help')}</p>
+    <p class="muted">{t('form.required')}</p>
     <label class="field">
-      <span>{t('pubs.paste.list')}</span>
+      <span>{t('pubs.paste.list')} <span aria-hidden="true">*</span></span>
       <textarea rows="6" bind:value={text} autocomplete="off"></textarea>
     </label>
-    <label class="field">
+    <div class="field">
       <span>{t('pubs.paste.language')}</span>
-      <input maxlength="200" bind:value={language} autocomplete="off" />
-    </label>
+      <LanguageSelect label={t('pubs.paste.language')} bind:value={language} />
+    </div>
     {#if rows.length}
       <table>
         <thead><tr><th>{t('pubs.name')}</th><th>{t('pubs.language')}</th><th>{t('pubs.variant')}</th><th>{t('pubs.paste.status')}</th></tr></thead>
         <tbody>
           {#each rows as r, i (i)}
             <tr class={r.status}>
-              <td>{r.name}</td><td>{r.language}</td><td>{r.variant}</td>
+              <td>{r.name}</td><td>{languageName(r.language, i18n.lang)}</td><td>{r.variant}</td>
               <td><span aria-hidden="true">{icon[r.status]}</span> <span>{t(label[r.status])}</span></td>
             </tr>
           {/each}
@@ -97,7 +102,7 @@
 <style>
   dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; width: min(640px, 94vw); padding: 0; }
   .content { padding: 16px; }
-  button, input { min-height: 44px; font-size: 16px; }
+  button { min-height: 44px; font-size: 16px; }
   textarea { font-size: 16px; }
   button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
   button:disabled { opacity: 0.5; }
@@ -105,7 +110,7 @@
   .muted { color: var(--muted); }
   .err { color: var(--bad); }
   .field { display: grid; gap: 4px; margin: 8px 0; }
-  .field input, textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
+  textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
   table { width: 100%; border-collapse: collapse; margin: 8px 0; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   tr.paste td, tr.catalogue td { color: var(--muted); }

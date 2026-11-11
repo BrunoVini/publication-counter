@@ -16,6 +16,7 @@ import { setStore, listBackups } from '../../src/store/persist';
 import { emptyDataset } from '../../src/domain/dataset';
 import { serializeDataset } from '../../src/domain/file';
 import { i18n } from '../../src/i18n/index.svelte';
+import { loadLanguages } from '../../src/domain/languages.svelte';
 import { pickTextFile, shareOrDownload } from '../../src/ui/shared/fileio';
 import type { Dataset } from '../../src/domain/types';
 
@@ -171,5 +172,21 @@ describe('unreadable data export', () => {
     expect(name).toMatch(/\.json$/);
     expect(JSON.parse(text as string)).toEqual({ junk: 1 });
     expect(mime).toBe('application/json');
+  });
+});
+
+describe('publication languages', () => {
+  test('edits the primary and secondary languages; a secondary equal to the primary is dropped', async () => {
+    await loadLanguages();
+    app.ds.settings.pubLanguage = 'T';
+    app.ds.settings.pubLanguages = ['S'];
+    render(SettingsScreen);
+    const [primary, others] = screen.getAllByRole('searchbox');
+    await fireEvent.input(primary, { target: { value: 'english' } });
+    await fireEvent.click(screen.getAllByRole('radio', { name: /^English(·|$)/ }).at(-1)!);
+    expect(app.ds.settings.pubLanguage).toBe('E');
+    await fireEvent.input(others, { target: { value: 'german' } });
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^German(·|$)/ }));
+    expect(app.ds.settings.pubLanguages).toEqual(['S', 'X']);
   });
 });

@@ -7,6 +7,7 @@ import Toast from '../../src/ui/shared/Toast.svelte';
 import { app } from '../../src/store/app.svelte';
 import { emptyDataset } from '../../src/domain/dataset';
 import { i18n } from '../../src/i18n/index.svelte';
+import { loadLanguages } from '../../src/domain/languages.svelte';
 import type { Publication } from '../../src/domain/types';
 
 beforeAll(() => {
@@ -17,7 +18,8 @@ beforeAll(() => {
 const pub = (id: string, name: string, language = 'PT', variant = '', archived = false): Publication =>
   ({ id, name, language, variant, defaultMode: 'weigh', archived });
 
-beforeEach(() => {
+beforeEach(async () => {
+  await loadLanguages();
   i18n.lang = 'en';
   app.ds = emptyDataset('d1', { firstRunDone: true });
   app.ds.publications = [pub('a', 'Awake!'), pub('o', 'Old', 'PT', '', true)];
@@ -30,10 +32,10 @@ const type = (label: RegExp | string, value: string) =>
 
 describe('publications screen', () => {
   test('add publication rejects duplicate inline', async () => {
+    app.ds.settings.pubLanguage = 'PT';
     render(PublicationsScreen);
     await fireEvent.click(screen.getByRole('button', { name: '+ New' }));
     await type(/^Name/, 'awake!');
-    await type(/^Language/, 'pt');
     await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(screen.getByRole('alert').textContent).toContain('already exists');
     expect(app.ds.publications.length).toBe(2);
@@ -67,8 +69,8 @@ describe('publications screen', () => {
     render(PublicationsScreen);
     render(Toast);
     await fireEvent.click(screen.getByRole('button', { name: 'Paste list' }));
-    const dlg = within(screen.getByRole('dialog', { hidden: true }));
-    await fireEvent.input(dlg.getByLabelText('List'), {
+    const dlg = within(screen.getByRole('dialog', { hidden: true, name: 'Paste list' }));
+    await fireEvent.input(dlg.getByLabelText(/^List/), {
       target: { value: 'Awake!\tPT\nNew one\tPT\nnew one\tPT\nOld\tPT' },
     });
     flushSync();
@@ -115,5 +117,64 @@ describe('publications screen', () => {
     await type(/^Sample weight/, '0,5');
     await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(app.ds.publications[0].sample).toEqual({ units: 7, weightG: 500 });
+  });
+
+  test('the form preselects the primary language, then offers the secondary ones', async () => {
+    app.ds.settings.pubLanguage = 'T';
+    app.ds.settings.pubLanguages = ['E', 'S'];
+    render(PublicationsScreen);
+    await fireEvent.click(screen.getByRole('button', { name: '+ New' }));
+    const sel = screen.getByLabelText('Language') as HTMLSelectElement;
+    expect(sel.value).toBe('T');
+    expect([...sel.options].map((o) => o.textContent)).toEqual(['Portuguese (Brazil)', 'English', 'Spanish', 'Other language…']);
+  });
+
+  test('a language picked via Other can be added to the secondary languages', async () => {
+    app.ds.settings.pubLanguage = 'T';
+    render(PublicationsScreen);
+    await fireEvent.click(screen.getByRole('button', { name: '+ New' }));
+    await type(/^Name/, 'Tract');
+    await fireEvent.change(screen.getByLabelText('Language'), { target: { value: '\u0000other' } });
+    const dlg = within(screen.getByRole('dialog', { name: 'Choose a language', hidden: true }));
+    await fireEvent.input(dlg.getByRole('searchbox'), { target: { value: 'german' } });
+    await fireEvent.click(dlg.getByRole('radio', { name: /^German(·|$)/ }));
+    await fireEvent.click(dlg.getByRole('checkbox', { name: /add it to my other/ }));
+    await fireEvent.click(dlg.getByRole('button', { name: 'Use this language' }));
+    expect((screen.getByLabelText('Language') as HTMLSelectElement).value).toBe('X');
+    expect(app.ds.settings.pubLanguages).toEqual(['X']);
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(app.ds.publications[2].language).toBe('X');
+  });
+
+  test('legacy free-text languages display raw and stay selected when editing', async () => {
+    app.ds.settings.pubLanguage = 'T';
+    app.ds.publications = [pub('l', 'Old tract', 'Mandarim'), pub('c', 'Coded', 'E')];
+    render(PublicationsScreen);
+    expect(screen.getByRole('button', { name: /Old tract/ }).textContent).toContain('Mandarim');
+    expect(screen.getByRole('button', { name: /Coded/ }).textContent).toContain('English');
+    await fireEvent.click(screen.getByRole('button', { name: /Old tract/ }));
+    const sel = screen.getByLabelText('Language') as HTMLSelectElement;
+    expect(sel.value).toBe('Mandarim');
+    expect(sel.selectedOptions[0].textContent).toBe('Mandarim');
+  });
+
+  test('searching matches the displayed language name', async () => {
+    app.ds.publications = [pub('c', 'Coded', 'E'), pub('d', 'Other', 'X')];
+    render(PublicationsScreen);
+    await fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'english' } });
+    expect(screen.queryByRole('button', { name: /Other/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /Coded/ })).toBeTruthy();
+  });
+
+  test('paste list preselects the primary language and maps exact names to codes', async () => {
+    app.ds.settings.pubLanguage = 'S';
+    render(PublicationsScreen);
+    await fireEvent.click(screen.getByRole('button', { name: 'Paste list' }));
+    const dlg = within(screen.getByRole('dialog', { hidden: true, name: 'Paste list' }));
+    expect((dlg.getByLabelText('Default language') as HTMLSelectElement).value).toBe('S');
+    await fireEvent.input(dlg.getByLabelText(/^List/), { target: { value: 'One\tInglês\nTwo\tKlingon\nThree' } });
+    flushSync();
+    await fireEvent.click(dlg.getByRole('button', { name: /^Add 3/ }));
+    expect(app.ds.publications.slice(-3).map((p) => p.language)).toEqual(['E', 'Klingon', 'S']);
   });
 });

@@ -314,5 +314,20 @@
   "drive.delete": "Delete Drive backup and disconnect",
   "drive.deleteTitle": "Delete the Drive backup?",
   "drive.deleteMessage": "This permanently deletes the \"Publication Counter\" folder and the backup file the app created in your Google Drive, and revokes the app's access to your Google account. The data on this device is kept.",
-  "drive.deleteExpiredHint": "Reconnect first to delete the Drive backup."
+  "drive.deleteExpiredHint": "Reconnect first to delete the Drive backup.",
+  "form.required": "* required",
+  "first.pubLanguage": "Main publication language",
+  "first.pubLanguages": "Other publication languages (optional)",
+  "first.pubLanguage.required": "Choose the main publication language to continue.",
+  "lang.search": "Search languages",
+  "lang.none": "No language found.",
+  "lang.more": "Showing the first {count}. Type to narrow the list.",
+  "lang.loading": "Loading languages…",
+  "lang.other": "Other language…",
+  "lang.otherTitle": "Choose a language",
+  "lang.addToMine": "Also add it to my other languages",
+  "lang.use": "Use this language",
+  "set.pubLangs": "Publication languages",
+  "set.pubLanguage": "Main language",
+  "set.pubLanguages": "Other languages"
 }
