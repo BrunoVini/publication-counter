@@ -3,5 +3,13 @@
   "count.progress": "{done} de {total}",
   "nav.count": "Conteo",
   "nav.publications": "Publicaciones",
-  "nav.settings": "Ajustes"
+  "nav.settings": "Ajustes",
+  "nav.label": "Navegación principal",
+  "save.label": "Estado de guardado",
+  "save.saved": "Guardado",
+  "save.saving": "Guardando",
+  "save.unavailable": "No guardado",
+  "save.unavailableBanner": "Los datos no se están guardando en este dispositivo. Exporta un archivo para no perder el conteo.",
+  "toast.dismiss": "Cerrar aviso",
+  "dialog.cancel": "Cancelar"
 }

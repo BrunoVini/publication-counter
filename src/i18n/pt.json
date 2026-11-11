@@ -3,5 +3,13 @@
   "count.progress": "{done} de {total}",
   "nav.count": "Contagem",
   "nav.publications": "Publicações",
-  "nav.settings": "Configurações"
+  "nav.settings": "Configurações",
+  "nav.label": "Navegação principal",
+  "save.label": "Estado de salvamento",
+  "save.saved": "Salvo",
+  "save.saving": "Salvando",
+  "save.unavailable": "Não salvo",
+  "save.unavailableBanner": "Os dados não estão sendo salvos neste aparelho. Exporte um arquivo para não perder a contagem.",
+  "toast.dismiss": "Dispensar aviso",
+  "dialog.cancel": "Cancelar"
 }

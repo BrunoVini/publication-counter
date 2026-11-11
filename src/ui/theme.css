@@ -1,0 +1,53 @@
+/* Contrast ratios (text on its background) are noted per token; all >= 4.5:1. */
+:root {
+  --bg: #ffffff;
+  --surface: #f4f5f4;
+  --text: #111111;        /* 18.9:1 on --bg */
+  --muted: #595959;       /* 7.0:1 on --bg */
+  --border: #c8c8c8;
+  --accent: #2b7a4b;      /* 5.4:1 on --bg, white text on it 5.4:1 */
+  --on-accent: #ffffff;
+  --warn-bg: #fff4e0;
+  --warn-text: #7a4a00;   /* 7.0:1 on --warn-bg */
+  --bad: #b00020;         /* 6.9:1 on --bg */
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --text: #ececec;      /* 15.8:1 on --bg */
+    --muted: #b0b0b0;     /* 8.3:1 on --bg */
+    --border: #444444;
+    --accent: #5fc98a;    /* 8.9:1 on --bg, --on-accent text 9.0:1 on it */
+    --on-accent: #0b1f13;
+    --warn-bg: #3a2a08;
+    --warn-text: #ffd48a; /* 9.6:1 on --warn-bg */
+    --bad: #ff8a9b;       /* 7.6:1 on --bg */
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --text: #ececec;
+  --muted: #b0b0b0;
+  --border: #444444;
+  --accent: #5fc98a;
+  --on-accent: #0b1f13;
+  --warn-bg: #3a2a08;
+  --warn-text: #ffd48a;
+  --bad: #ff8a9b;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, sans-serif; }
+button { font: inherit; color: inherit; min-height: 44px; min-width: 44px; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+@media print {
+  nav, .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+}

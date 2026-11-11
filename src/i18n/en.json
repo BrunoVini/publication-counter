@@ -3,5 +3,13 @@
   "count.progress": "{done} of {total}",
   "nav.count": "Count",
   "nav.publications": "Publications",
-  "nav.settings": "Settings"
+  "nav.settings": "Settings",
+  "nav.label": "Main navigation",
+  "save.label": "Save status",
+  "save.saved": "Saved",
+  "save.saving": "Saving",
+  "save.unavailable": "Not saved",
+  "save.unavailableBanner": "Your data is not being saved on this device. Export a file so you do not lose the count.",
+  "toast.dismiss": "Dismiss message",
+  "dialog.cancel": "Cancel"
 }
