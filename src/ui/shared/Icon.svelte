@@ -34,8 +34,10 @@
   const { name, size = 20 }: { name: IconName; size?: number } = $props();
 </script>
 
-<svg class="icon" viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" focusable="false"><path d={paths[name]} /></svg>
+<svg class="icon" class:flip={name === 'chevron' || name === 'back' || name === 'undo'} viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" focusable="false"><path d={paths[name]} /></svg>
 
 <style>
   .icon { flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.2em; }
+  /* NOTE: directional icons mirror in right-to-left layouts. */
+  :global([dir='rtl']) .flip { transform: scaleX(-1); }
 </style>

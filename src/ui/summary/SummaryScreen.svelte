@@ -150,11 +150,11 @@
 {/if}
 
 <style>
-  .warn { display: flex; justify-content: flex-start; width: 100%; padding-block: var(--sp-2); font-weight: 700; text-align: left; }
+  .warn { display: flex; justify-content: flex-start; width: 100%; padding-block: var(--sp-2); font-weight: 700; text-align: start; }
   .bad { display: block; font-size: var(--fs-sm); }
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: var(--sp-2); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th, td { padding: var(--sp-2); border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; }
   thead th { color: var(--muted); font-size: var(--fs-sm); vertical-align: bottom; }
   th[scope='row'] { font-weight: 600; overflow-wrap: break-word; }
   .var-in { display: none; color: var(--muted); font-size: var(--fs-sm); font-weight: 400; }
@@ -163,7 +163,7 @@
     .var-in { display: block; }
     th, td { padding: var(--sp-2) var(--sp-1); }
   }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .num { text-align: end; font-variant-numeric: tabular-nums; }
   td.num:not(.prev) { font-size: 18px; font-weight: 700; }
   .prev { color: var(--muted); }
   .group { background: var(--surface); }

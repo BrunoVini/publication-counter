@@ -141,9 +141,9 @@
   .arch .main { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .toggle { margin-top: var(--sp-4); border-color: transparent; color: var(--muted); padding: 0 var(--sp-1); }
   table { width: 100%; border-collapse: collapse; margin: var(--sp-3) 0; }
-  th, td { text-align: left; padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--border); }
+  th, td { text-align: start; padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-size: var(--fs-sm); }
-  .acts { white-space: nowrap; text-align: right; }
-  .acts button { margin-left: var(--sp-1); }
+  .acts { white-space: nowrap; text-align: end; }
+  .acts button { margin-inline-start: var(--sp-1); }
   @media (min-width: 600px) { .grow { flex: 1 1 240px; } .bar button { flex: none; } }
 </style>

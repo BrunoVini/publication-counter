@@ -117,15 +117,15 @@ legend { padding: 0 var(--sp-1); font-weight: 600; }
 .check { display: flex; align-items: center; gap: var(--sp-2); min-height: var(--tap); }
 /* Search box with a leading icon. */
 .search { position: relative; display: block; font-weight: 400; }
-.search .icon { position: absolute; left: var(--sp-3); top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-.search input { padding-left: 40px; }
+.search .icon { position: absolute; inset-inline-start: var(--sp-3); top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search input { padding-inline-start: 40px; }
 
 /* Segmented choice built on native radios: <div class="seg"><label><input type="radio"><span>…</span></label>…</div>. */
 .segset { padding: 0; border: 0; }
 .segset legend { padding: 0; margin-bottom: var(--sp-1); }
 .seg { display: flex; border: 1px solid var(--accent); border-radius: var(--radius); overflow: hidden; }
 .seg label { position: relative; flex: 1 1 auto; display: flex; min-width: 0; cursor: pointer; }
-.seg label + label { border-left: 1px solid var(--accent); }
+.seg label + label { border-inline-start: 1px solid var(--accent); }
 .seg input { position: absolute; opacity: 0; }
 .seg span { flex: 1; display: flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 var(--sp-1); color: var(--accent); font-weight: 600; text-align: center; }
 /* NOTE: the tick keeps the selected option from relying on colour alone. */
@@ -152,7 +152,7 @@ legend { padding: 0 var(--sp-1); font-weight: 600; }
 .row {
   width: 100%; min-height: var(--tap-lg); justify-content: space-between; gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-1); border: 0; border-radius: 0;
-  background: none; color: var(--text); font-weight: 400; text-align: left;
+  background: none; color: var(--text); font-weight: 400; text-align: start;
 }
 .row .main { display: grid; flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .row .main strong { font-weight: 600; }

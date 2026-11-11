@@ -94,15 +94,15 @@
   .ios button { color: inherit; }
   main { width: 100%; max-width: 1100px; margin: 0 auto; padding: var(--sp-4); }
   h1 { margin-bottom: var(--sp-3); }
-  nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); display: flex; background: var(--bg); border-top: 1px solid var(--border); z-index: 10; }
+  nav { position: fixed; bottom: 0; inset-inline: 0; height: var(--nav-h); display: flex; background: var(--bg); border-top: 1px solid var(--border); z-index: 10; }
   nav button { flex: 1; flex-direction: column; gap: 2px; padding: 0; background: none; border: 0; border-top: 3px solid transparent; border-radius: 0; color: var(--muted); font-size: 13px; font-weight: 600; }
   /* NOTE: the bar and the heavier weight mark the current tab, so it does not rely on colour alone. */
   nav button[aria-current='page'] { color: var(--accent); border-top-color: var(--accent); font-weight: 700; }
   @media (min-width: 900px) {
-    .shell { padding: 0 0 0 200px; }
-    nav { top: 48px; right: auto; bottom: 0; width: 200px; height: auto; flex-direction: column; justify-content: flex-start; gap: var(--sp-1); border-top: 0; border-right: 1px solid var(--border); padding: var(--sp-2); }
-    nav button { flex: none; flex-direction: row; justify-content: flex-start; gap: var(--sp-3); padding: 0 var(--sp-3); border-top: 0; border-left: 3px solid transparent; border-radius: var(--radius); font-size: var(--fs-md); }
-    nav button[aria-current='page'] { border-left-color: var(--accent); background: var(--accent-soft); color: var(--text); }
-    header { margin-left: -200px; padding-left: var(--sp-4); }
+    .shell { padding-inline-start: 200px; }
+    nav { top: 48px; inset-inline-end: auto; bottom: 0; width: 200px; height: auto; flex-direction: column; justify-content: flex-start; gap: var(--sp-1); border-top: 0; border-inline-end: 1px solid var(--border); padding: var(--sp-2); }
+    nav button { flex: none; flex-direction: row; justify-content: flex-start; gap: var(--sp-3); padding: 0 var(--sp-3); border-top: 0; border-inline-start: 3px solid transparent; border-radius: var(--radius); font-size: var(--fs-md); }
+    nav button[aria-current='page'] { border-inline-start-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+    header { margin-inline-start: -200px; padding-inline-start: var(--sp-4); }
   }
 </style>

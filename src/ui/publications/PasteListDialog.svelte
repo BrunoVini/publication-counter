@@ -96,7 +96,7 @@
   dialog { width: min(640px, calc(100vw - 2 * var(--sp-4))); }
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: var(--sp-2); border-bottom: 1px solid var(--border); }
+  th, td { text-align: start; padding: var(--sp-2); border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-size: var(--fs-sm); }
   tr.new td:last-child { color: var(--accent); font-weight: 600; }
   tr.paste td, tr.catalogue td { color: var(--muted); }
