@@ -8,7 +8,10 @@ export function emptyDataset(datasetId: string, settings: Partial<Settings> = {}
   return {
     formatVersion: 1,
     datasetId,
-    settings: { unit: 'g', scale: null, theme: 'system', firstRunDone: false, ...settings },
+    settings: {
+      unit: 'g', scale: null, theme: 'system', firstRunDone: false,
+      ...Object.fromEntries(Object.entries(settings).filter(([, v]) => v !== undefined)),
+    },
     publications: [],
     counts: [],
   };
@@ -54,6 +57,12 @@ const newItem = (p: Publication): CountItem => ({
   publicationId: p.id, sample: p.sample && copy(p.sample), entries: [], zero: false, entered: false,
 });
 
+function assertValidPublication(p: Omit<Publication, 'id'>): void {
+  if (typeof p.name !== 'string' || p.name.trim() === '') fail('invalidPublication');
+  if (p.packSize !== undefined && !posInt(p.packSize)) fail('invalidPublication');
+  if (p.sample !== undefined && (!posInt(p.sample.units) || !posG(p.sample.weightG))) fail('invalidEntry');
+}
+
 function assertUnique(ds: Dataset, p: Omit<Publication, 'id'>, selfId?: string): void {
   if (p.archived) return;
   const key = identityKey(p);
@@ -88,6 +97,8 @@ export function addPublication(
   ds: Dataset, p: Omit<Publication, 'id' | 'archived'>, newId: () => string,
 ): Publication {
   const full: Publication = { ...p, id: newId(), archived: false };
+  if (full.sample) full.sample = copy(full.sample);
+  assertValidPublication(full);
   assertUnique(ds, full);
   ds.publications.push(full);
   // Read back so callers get the (possibly reactive) stored object.
@@ -96,10 +107,17 @@ export function addPublication(
   return stored;
 }
 
-export function updatePublication(ds: Dataset, id: string, patch: Partial<Omit<Publication, 'id'>>): void {
+export function updatePublication(
+  ds: Dataset, id: string, patch: Partial<Omit<Publication, 'id' | 'archived'>>,
+): void {
   const p = findPub(ds, id);
-  assertUnique(ds, { ...p, ...patch }, id);
-  Object.assign(p, patch);
+  // NOTE: archived only changes through archivePublication (it maintains the open count).
+  const { archived: _ignored, ...rest } = patch as Partial<Publication>;
+  if (rest.sample) rest.sample = copy(rest.sample);
+  const merged = { ...p, ...rest };
+  assertValidPublication(merged);
+  assertUnique(ds, merged, id);
+  Object.assign(p, rest);
 }
 
 export function archivePublication(ds: Dataset, id: string, archived: boolean): void {
@@ -161,16 +179,20 @@ export function updateEntry(
   const idx = item.entries.findIndex((e) => e.id === entryId);
   if (idx < 0) fail('notFound');
   const old = item.entries[idx];
+  if (old.kind === 'sample') fail('useSetSample');
   if (patch.kind !== undefined && patch.kind !== old.kind) fail('invalidEntry');
-  const merged = { ...old, ...patch, id: old.id, kind: old.kind } as Entry;
-  if (!validEntry(merged)) fail('invalidEntry');
-  item.entries[idx] = merged;
+  const fields = { weighing: ['weightG'], sealed: ['packs', 'perPack'], hand: ['units'], sample: [] }[old.kind];
+  const merged = { id: old.id, kind: old.kind } as Record<string, unknown>;
+  for (const f of fields) merged[f] = (f in patch ? patch : old)[f as keyof Entry];
+  if (!validEntry(merged as unknown as Entry)) fail('invalidEntry');
+  item.entries[idx] = merged as unknown as Entry;
 }
 
 export function deleteEntry(ds: Dataset, countId: string, pubId: string, entryId: string): void {
   const item = editable(ds, countId, pubId);
   const idx = item.entries.findIndex((e) => e.id === entryId);
   if (idx < 0) fail('notFound');
+  if (item.entries[idx].kind === 'sample') fail('useSetSample');
   item.entries.splice(idx, 1);
 }
 
