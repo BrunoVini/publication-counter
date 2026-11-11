@@ -7,6 +7,7 @@ const api = vi.hoisted(() => ({
 }));
 const gis = vi.hoisted(() => ({
   requestToken: vi.fn(),
+  preloadGis: vi.fn(async () => {}),
   revoke: vi.fn(async () => {}),
   AuthCancelled: class AuthCancelled extends Error {},
 }));
@@ -15,7 +16,7 @@ vi.mock('../../src/store/drive/gis', () => gis);
 
 import { setStore, listBackups, loadDriveState } from '../../src/store/persist';
 import { app, flushSaves } from '../../src/store/app.svelte';
-import { connect, disconnect, drive, reconnect, resolveConflict, syncNow } from '../../src/store/sync.svelte';
+import { connect, disconnect, drive, warmDrive, reconnect, resolveConflict, syncNow } from '../../src/store/sync.svelte';
 import { addPublication, emptyDataset } from '../../src/domain/dataset';
 import { serializeDataset } from '../../src/domain/file';
 import { DriveError } from '../../src/store/drive/api';
@@ -36,6 +37,7 @@ beforeEach(async () => {
   setStore(store);
   await disconnect();
   app.ds = emptyDataset('d1');
+  app.lastSavedAt = null;
   gis.requestToken.mockResolvedValue({ token: TOKEN, expiresAt: Date.now() + 3_600_000 });
   api.ensureFolder.mockResolvedValue('folder');
   api.upload.mockResolvedValue(meta('2'));
@@ -211,5 +213,66 @@ describe('drive sync', () => {
     });
     await Promise.all([syncNow(), syncNow(), syncNow()]);
     expect(max).toBe(1);
+  });
+
+  it('reconnect makes one silent request and fails without a fallback popup', async () => {
+    await linked();
+    gis.requestToken.mockClear();
+    gis.requestToken.mockRejectedValue(new gis.AuthCancelled('x'));
+    await reconnect();
+    expect(gis.requestToken).toHaveBeenCalledOnce();
+    expect(gis.requestToken).toHaveBeenCalledWith(false);
+    expect(drive.status).toBe('expired');
+  });
+
+  it('warmed up connect calls requestToken with no await before it', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'cid');
+    await warmDrive();
+    vi.unstubAllEnvs();
+    expect(gis.preloadGis).toHaveBeenCalled();
+    gis.requestToken.mockClear();
+    localWithData();
+    api.findFile.mockResolvedValue(null);
+    const p = connect();
+    expect(gis.requestToken).toHaveBeenCalledOnce();
+    await p;
+  });
+
+  it('resolve device re-checks the remote version and opens a new conflict', async () => {
+    await conflict();
+    api.getMeta.mockResolvedValue(meta('11'));
+    api.download.mockResolvedValue(remoteJson(withPub('d1', 'Third edit')));
+    api.upload.mockClear();
+    await resolveConflict('device');
+    expect(api.upload).not.toHaveBeenCalled();
+    expect(await listBackups()).toEqual([]);
+    expect(drive.status).toBe('conflict');
+    expect(drive.conflict?.remoteMeta.version).toBe('11');
+  });
+
+  it('disconnect mid-upload is not undone by the late write', async () => {
+    await linked();
+    api.getMeta.mockResolvedValue(meta('2'));
+    let done!: (m: ReturnType<typeof meta>) => void;
+    api.upload.mockReturnValue(new Promise((r) => { done = r; }));
+    const sync = syncNow();
+    await vi.waitFor(() => expect(api.upload).toHaveBeenCalled());
+    const off = disconnect();
+    done(meta('3'));
+    await Promise.all([sync, off]);
+    expect((await loadDriveState()).connected).toBe(false);
+    expect(drive.status).toBe('off');
+  });
+
+  it('sync skips the upload when nothing changed since the last sync', async () => {
+    await linked();
+    api.getMeta.mockResolvedValue(meta('2'));
+    app.lastSavedAt = '2000-01-01T00:00:00.000Z';
+    await syncNow();
+    expect(api.upload).not.toHaveBeenCalled();
+    expect(drive.status).toBe('idle');
+    app.lastSavedAt = '2999-01-01T00:00:00.000Z';
+    await syncNow();
+    expect(api.upload).toHaveBeenCalledOnce();
   });
 });

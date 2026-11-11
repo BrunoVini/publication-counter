@@ -25,7 +25,15 @@ let chain: Promise<unknown> = Promise.resolve();
 
 // NOTE: lazy so the Drive code stays out of the first-load bundle.
 const loadApi = () => import('./drive/api');
-const loadGis = () => import('./drive/gis');
+// NOTE: cached so a click handler can call requestToken with no await before it once warmed up.
+let gisMod: typeof import('./drive/gis') | null = null;
+const loadGis = async () => (gisMod ??= await import('./drive/gis'));
+
+/** Fire-and-forget: loads the Drive sign-in module and script so a later click opens the popup at once. */
+export function warmDrive(): Promise<void> {
+  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) return Promise.resolve();
+  return loadGis().then((g) => g.preloadGis()).catch(() => {});
+}
 
 // NOTE: serialises every sync operation; a failed job never blocks the next one.
 const enqueue = <T>(job: () => Promise<T>): Promise<T> => {
@@ -123,8 +131,8 @@ function adopt(r: { token: string; expiresAt: number }): void {
 }
 
 export async function connect(): Promise<void> {
-  // NOTE: the import is the only await before the token request, so the popup keeps the click gesture.
-  const gis = await loadGis();
+  // NOTE: no await before the token request once warmed up, so the popup keeps the click gesture.
+  const gis = gisMod ?? await loadGis();
   try {
     adopt(await gis.requestToken(true));
   } catch {
@@ -159,6 +167,14 @@ export function syncNow(): Promise<void> {
         return store(await uploadLocal(token));
       }
       if (meta.version !== st.version) return compare(await fetchRemote(token, meta.id), meta);
+      // NOTE: nothing saved since the last sync and the remote is unchanged: nothing to upload.
+      // A null lastSavedAt (after a reload) is unknown, so it keeps uploading.
+      if (app.lastSavedAt !== null && st.lastSyncAt && app.lastSavedAt <= st.lastSyncAt) {
+        drive.status = 'idle';
+        return;
+      }
+      // NOTE: a change on another device between getMeta and this upload can still be overwritten;
+      // accepted, there is no If-Match on the upload.
       return store(await uploadLocal(token, st.fileId));
     });
   });
@@ -175,6 +191,10 @@ export function resolveConflict(choice: 'device' | 'drive'): Promise<void> {
         await replaceDataset(c.remote, 'drive conflict');
         return store(c.remoteMeta);
       }
+      // NOTE: the remote may have moved since the conflict opened; re-check before touching anything.
+      const api = await loadApi();
+      const now = await api.getMeta(token, c.remoteMeta.id);
+      if (now.version !== c.remoteMeta.version) return compare(await fetchRemote(token, now.id), now);
       if (!(await pushBackup(c.remote, 'drive conflict'))) throw 'backupFailed';
       return store(await uploadLocal(token, c.remoteMeta.id));
     });
@@ -182,17 +202,14 @@ export function resolveConflict(choice: 'device' | 'drive'): Promise<void> {
 }
 
 export async function reconnect(): Promise<void> {
-  const gis = await loadGis();
+  const gis = gisMod ?? await loadGis();
   try {
-    try {
-      adopt(await gis.requestToken(false));
-    } catch (e) {
-      if (!(e instanceof gis.AuthCancelled)) throw e;
-      adopt(await gis.requestToken(true));
-    }
-  } catch {
-    drive.status = 'expired';
-    drive.error = t('drive.err.cancelled');
+    adopt(await gis.requestToken(false));
+  } catch (e) {
+    // NOTE: one silent attempt only; the next click retries, which keeps every popup inside a gesture.
+    const cancelled = e instanceof gis.AuthCancelled;
+    drive.status = cancelled ? 'expired' : 'error';
+    drive.error = t(cancelled ? 'drive.err.cancelled' : 'drive.err.generic');
     return;
   }
   // NOTE: a pending conflict stays; syncNow skips it until the user chooses.
@@ -205,12 +222,15 @@ export async function disconnect(): Promise<void> {
   clearTimeout(timer);
   const old = tok;
   tok = null;
-  st = { connected: false };
-  drive.status = 'off';
-  drive.conflict = null;
-  drive.error = null;
-  drive.lastSyncAt = null;
-  await saveDriveState(st);
+  // NOTE: queued behind any in-flight sync so its late write cannot undo the disconnect.
+  await enqueue(async () => {
+    st = { connected: false };
+    drive.status = 'off';
+    drive.conflict = null;
+    drive.error = null;
+    drive.lastSyncAt = null;
+    await saveDriveState(st);
+  });
   if (old) { try { await (await loadGis()).revoke(old.token); } catch { /* best effort */ } }
 }
 
@@ -224,6 +244,7 @@ export function scheduleSync(): void {
 export async function initDrive(): Promise<void> {
   // NOTE: read here (not via gis.ts) so the Drive chunk is not fetched for users who never connect.
   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) { drive.status = 'notConfigured'; return; }
+  void warmDrive();
   st = await loadDriveState();
   drive.lastSyncAt = st.lastSyncAt ?? null;
   drive.status = st.connected ? 'expired' : 'off';
