@@ -4,6 +4,7 @@
   import { copySample, setSample } from '../../domain/dataset';
   import { sampleAdvice } from '../../domain/calc';
   import { parseDecimal, toGrams } from '../../domain/units';
+  import type { ScaleRange } from '../../domain/types';
   import ScaleEditor from '../settings/ScaleEditor.svelte';
   import { errorMessage, parseWhole } from './errors';
 
@@ -42,6 +43,10 @@
     } catch (e) { error = errorMessage(e); }
   }
 
+  function saveScale(s: ScaleRange[]): void {
+    try { act((ds) => { ds.settings.scale = s; }); error = ''; } catch (e) { error = errorMessage(e); }
+  }
+
   function copy(): void {
     if (!copyFrom) return;
     try {
@@ -54,7 +59,7 @@
 
 {#if askScale}
   <div class="form">
-    <ScaleEditor scale={[]} onsave={(s) => act((ds) => { ds.settings.scale = s; })} oncancel={() => (skipScale = true)} cancelLabel={t('scale.later')} />
+    <ScaleEditor scale={[]} onsave={saveScale} oncancel={() => (skipScale = true)} cancelLabel={t('scale.later')} />
   </div>
 {:else}
   <form class="form" onsubmit={(e) => { e.preventDefault(); save(); }}>

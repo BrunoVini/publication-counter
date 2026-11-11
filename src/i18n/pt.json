@@ -137,5 +137,6 @@
   "err.useSetSample": "A amostra só muda ao refazer a amostra.",
   "err.countFinished": "Esta contagem está encerrada.",
   "err.notFound": "Item não encontrado.",
-  "err.generic": "Algo deu errado. Tente de novo."
+  "err.generic": "Algo deu errado. Tente de novo.",
+  "warn.saveAnyway": "Salvar mesmo assim"
 }

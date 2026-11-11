@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { app, act } from '../../store/app.svelte';
-  import { fmtNumber, t } from '../../i18n/index.svelte';
+  import { fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { addEntry, deleteEntry, markZero, openCount, resetItem, updateEntry, updatePublication } from '../../domain/dataset';
   import { capacityG, checkWeighing, fractionWarning, itemTotal, unitWeightG } from '../../domain/calc';
   import type { ItemTotal, WeighingIssue } from '../../domain/calc';
@@ -49,7 +49,9 @@
   }
 
   const fmtW = (g: number): string => `${fmtNumber(fromGrams(g, unit), 3)} ${unit}`;
-  const plain = (g: number): string => String(Number(fromGrams(g, unit).toPrecision(6)));
+  // NOTE: edit fields are prefilled with the locale decimal separator; parseDecimal accepts both.
+  const plain = (g: number): string =>
+    String(Number(fromGrams(g, unit).toPrecision(6))).replace('.', i18n.lang === 'en' ? '.' : ',');
   const unitsOf = (g: number): number | null => {
     try { return item?.sample ? g / unitWeightG(item.sample) : null; } catch { return null; }
   };
@@ -67,7 +69,7 @@
     showToast(t('item.added', { count: Math.round(units) }), { label: t('item.undo'), run: () => undo(e.id) });
   }
   function onKey(e: KeyboardEvent): void {
-    if (!editable || e.key.toLowerCase() !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+    if (!editable || document.querySelector('dialog[open]') || e.key.toLowerCase() !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
     const el = e.target;
     if (el instanceof Element && el.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return;
     const last = added[added.length - 1];
@@ -78,6 +80,11 @@
 
   // Weighing
   let pending = $state<{ grams: number; issues: WeighingIssue[] } | null>(null);
+  // NOTE: a pending confirmation is only valid for the entries it was computed against.
+  $effect(() => {
+    void item?.entries.length;
+    untrack(() => { pending = null; editPending = null; });
+  });
 
   function commitWeighing(grams: number): boolean {
     let entry: Entry | undefined;
@@ -152,13 +159,16 @@
     : e.kind === 'hand' ? t('entry.hand', { units: fmtNumber(e.units, 0) })
     : t('entry.sample', { units: fmtNumber(e.units, 0), value: fmtW(e.weightG) });
 
-  let editing = $state<{ id: string; a: string; b: string } | null>(null);
+  let editing = $state<{ id: string; a: string; b: string; a0: string; b0: string } | null>(null);
+  let editPending = $state<WeighingIssue[] | null>(null);
   function startEdit(e: Entry): void {
     if (e.kind === 'sample') return;
     error = '';
-    editing = e.kind === 'weighing' ? { id: e.id, a: plain(e.weightG), b: '' }
-      : e.kind === 'sealed' ? { id: e.id, a: String(e.packs), b: String(e.perPack) }
-      : { id: e.id, a: String(e.units), b: '' };
+    editPending = null;
+    const [a, b] = e.kind === 'weighing' ? [plain(e.weightG), '']
+      : e.kind === 'sealed' ? [String(e.packs), String(e.perPack)]
+      : [String(e.units), ''];
+    editing = { id: e.id, a, b, a0: a, b0: b };
   }
   const draft = $derived.by((): Entry | null => {
     const old = editing && item?.entries.find((e) => e.id === editing!.id);
@@ -186,9 +196,22 @@
       return tt ? totalText(tt) : null;
     } catch { return null; }
   });
-  function saveEdit(): void {
-    if (!draft) { error = errorMessage(new Error('invalidEntry')); return; }
+  function saveEdit(force = false): void {
+    if (!draft || !editing) { error = errorMessage(new Error('invalidEntry')); return; }
     const d = draft;
+    if (editing.a === editing.a0 && editing.b === editing.b0) { editing = null; editPending = null; return; }
+    if (d.kind === 'weighing' && item && !force) {
+      let issues: WeighingIssue[] = [];
+      try { issues = checkWeighing(d.weightG, { ...item, entries: item.entries.filter((e) => e.id !== d.id) }, scale); } catch { issues = []; }
+      if (issues.includes('overCapacity')) {
+        const cap = capacityG(scale);
+        error = t('err.overCapacity', { cap: cap === null ? '' : fmtW(cap) });
+        editPending = null;
+        return;
+      }
+      if (issues.length > 0) { error = ''; editPending = issues; return; }
+    }
+    editPending = null;
     if (run(() => act((ds) => updateEntry(ds, countId, pubId, d.id, d)))) editing = null;
   }
 
@@ -266,7 +289,7 @@
 
       <div role="tablist" aria-label={t('item.tabs')} class="tabs">
         {#each ['weigh', 'sealed', 'hand'] as const as k (k)}
-          <button type="button" role="tab" aria-selected={tab === k} onclick={() => { tabChoice = k; formError = ''; }}>{t(`item.tab.${k}`)}</button>
+          <button type="button" role="tab" aria-selected={tab === k} onclick={() => { tabChoice = k; formError = ''; pending = null; }}>{t(`item.tab.${k}`)}</button>
         {/each}
       </div>
 
@@ -315,7 +338,7 @@
         {#each shown as e (e.id)}
           <li>
             {#if editing && editing.id === e.id && editable}
-              <form class="grid" onsubmit={(ev) => { ev.preventDefault(); saveEdit(); }}>
+              <form class="grid" onsubmit={(ev) => { ev.preventDefault(); saveEdit(); }} oninput={() => (editPending = null)}>
                 <p>{t('entry.edit.old', { value: entryText(e) })}</p>
                 {#if e.kind === 'weighing'}
                   <label>{t('entry.edit.weight', { unit })}<input type="text" inputmode="decimal" bind:value={editing.a} /></label>
@@ -324,6 +347,13 @@
                   <label>{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={editing.b} /></label>
                 {:else}
                   <label>{t('hand.units')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
+                {/if}
+                {#if editPending}
+                  <div class="warn" role="alert">
+                    {#each editPending as issue (issue)}<p>{t(`warn.${issue}`)}</p>{/each}
+                    <button type="button" onclick={() => saveEdit(true)}>{t('warn.saveAnyway')}</button>
+                    <button type="button" onclick={() => (editPending = null)}>{t('dialog.cancel')}</button>
+                  </div>
                 {/if}
                 {#if draftTotal}<p aria-live="polite">{t('entry.edit.newTotal', { total: draftTotal })}</p>{/if}
                 <div class="actions">

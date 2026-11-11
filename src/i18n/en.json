@@ -137,5 +137,6 @@
   "err.useSetSample": "The sample can only change by re-weighing it.",
   "err.countFinished": "This count is finished.",
   "err.notFound": "Item not found.",
-  "err.generic": "Something went wrong. Try again."
+  "err.generic": "Something went wrong. Try again.",
+  "warn.saveAnyway": "Save anyway"
 }

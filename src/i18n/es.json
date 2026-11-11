@@ -137,5 +137,6 @@
   "err.useSetSample": "La muestra solo cambia al rehacerla.",
   "err.countFinished": "Este conteo está cerrado.",
   "err.notFound": "Elemento no encontrado.",
-  "err.generic": "Algo salió mal. Inténtalo de nuevo."
+  "err.generic": "Algo salió mal. Inténtalo de nuevo.",
+  "warn.saveAnyway": "Guardar de todos modos"
 }
