@@ -10,7 +10,11 @@ async function load(l) {
   if (!res.ok) throw new Error(`${l}: HTTP ${res.status}`);
   const { languages } = await res.json();
   if (!Array.isArray(languages) || languages.length < 500) throw new Error(`${l}: unexpected payload`);
-  return languages;
+  // NOTE: never trust the payload's shape; a malformed entry is skipped, and too few valid ones aborts.
+  const ok = languages.filter((x) => x && typeof x.langcode === 'string' && /^[A-Za-z0-9-]{1,20}$/.test(x.langcode)
+    && typeof x.name === 'string' && typeof x.vernacularName === 'string');
+  if (ok.length < 500) throw new Error(`${l}: only ${ok.length} valid entries`);
+  return ok;
 }
 
 const byCode = new Map();

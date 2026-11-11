@@ -1,4 +1,5 @@
-import { clean, identityKey } from './text';
+import { clean } from './text';
+import { canonicalKey } from './languages.svelte';
 import type { Dataset, Publication } from './types';
 import { copy, fail, findPub, newItem, openCount, posG, posInt } from './dataset-helpers';
 
@@ -10,8 +11,8 @@ function assertValidPublication(p: Omit<Publication, 'id'>): void {
 
 function assertUnique(ds: Dataset, p: Omit<Publication, 'id'>, selfId?: string): void {
   if (p.archived) return;
-  const key = identityKey(p);
-  if (ds.publications.some((o) => o.id !== selfId && !o.archived && identityKey(o) === key)) fail('duplicate');
+  const key = canonicalKey(p);
+  if (ds.publications.some((o) => o.id !== selfId && !o.archived && canonicalKey(o) === key)) fail('duplicate');
 }
 
 const cleanIdentity = <T extends { name?: string; language?: string; variant?: string }>(p: T): T => {

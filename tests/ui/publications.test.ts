@@ -166,6 +166,16 @@ describe('publications screen', () => {
     expect(screen.getByRole('button', { name: /Coded/ })).toBeTruthy();
   });
 
+  test('paste marks a legacy free-text language and its code as the same publication', async () => {
+    app.ds.publications = [pub('s', 'Sentinela', 'Inglês')];
+    render(PublicationsScreen);
+    await fireEvent.click(screen.getByRole('button', { name: 'Paste list' }));
+    const dlg = within(screen.getByRole('dialog', { hidden: true, name: 'Paste list' }));
+    await fireEvent.input(dlg.getByLabelText(/^List/), { target: { value: 'Sentinela\tInglês' } });
+    flushSync();
+    expect(dlg.getAllByText('Already in catalogue').length).toBe(1);
+  });
+
   test('paste list preselects the primary language and maps exact names to codes', async () => {
     app.ds.settings.pubLanguage = 'S';
     render(PublicationsScreen);

@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -27,13 +28,16 @@ jobs:
             echo "No changes."
             exit 0
           fi
-          branch="chore/update-languages-$(date +%Y%m%d)"
+          branch=chore/update-languages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
           git add src/data/languages.json
           git commit -m "chore(data): update languages list"
-          git push origin "$branch"
+          git push -f origin HEAD:"$branch"
+          # NOTE: pushes made with GITHUB_TOKEN do not trigger CI, so dispatch it explicitly.
+          gh workflow run ci.yml --ref "$branch"
           gh pr create --base main --head "$branch" \
             --title "chore(data): update languages list" \
-            --body "Monthly refresh of src/data/languages.json from the public languages list."
+            --body "Monthly refresh of src/data/languages.json from the public languages list." \
+            || gh pr edit "$branch" --body "Monthly refresh of src/data/languages.json from the public languages list."

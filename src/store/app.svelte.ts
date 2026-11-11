@@ -6,23 +6,36 @@ import type { Dataset } from '../domain/types';
 import { disconnect, scheduleSync } from './sync.svelte';
 import { clearAll, loadDataset, pushBackup, requestPersistentStorage, saveDataset } from './persist';
 
-export const app = $state({
+interface AppState {
+  ds: Dataset;
+  saveState: 'saved' | 'saving' | 'unavailable';
+  tab: 'count' | 'publications' | 'settings';
+  openItemId: string | null;
+  pasteOpen: boolean;
+  summaryCountId: string | null;
+  pubDraftName: string | null;
+  onlyNotCounted: boolean;
+  incomingFile: string | null;
+  lastSavedAt: string | null;
+}
+
+export const app = $state<AppState>({
   ds: emptyDataset('pending'),
   saveState: 'saved',
   tab: 'count',
-  openItemId: null as string | null,
+  openItemId: null,
   // NOTE: set by first run's "Paste list"; the publications tab consumes it to open the paste dialog.
   pasteOpen: false,
   // NOTE: set by the Summary button and by history rows; the Summary screen consumes it.
-  summaryCountId: null as string | null,
+  summaryCountId: null,
   // NOTE: set by "Create '<text>'" in the count search; the publications tab consumes it.
-  pubDraftName: null as string | null,
+  pubDraftName: null,
   // NOTE: the count list's "only not counted" filter; the Summary sets it to jump to the uncounted items.
   onlyNotCounted: false,
   // NOTE: text of a file received by launch or share, waiting for the user to confirm replacing data.
-  incomingFile: null as string | null,
+  incomingFile: null,
   // NOTE: ISO time of the last successful save in this session; null until something is saved.
-  lastSavedAt: null as string | null,
+  lastSavedAt: null,
 });
 
 let chain: Promise<unknown> = Promise.resolve();

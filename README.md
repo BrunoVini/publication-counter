@@ -22,6 +22,8 @@ npm run build   # production build in dist/
 Cloudflare Pages: build `npm run build`, output `dist`, env `NODE_VERSION=22`.
 Production URL: TODO.
 
+The monthly languages update opens a pull request, so the repository setting "Allow GitHub Actions to create and approve pull requests" must be enabled.
+
 Pilot checklist: [docs/pilot-checklist.md](docs/pilot-checklist.md).
 
 ## License

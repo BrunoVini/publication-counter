@@ -1,4 +1,4 @@
-import { norm } from './text';
+import { identityKey, norm, type PublicationIdentity } from './text';
 import type { Lang } from './types';
 
 /** One entry of the public languages list: code, localised names and the vernacular name. */
@@ -34,6 +34,9 @@ export function languageByName(text: string): string {
   const hit = store.data.list.find((e) => [e.pt, e.en, e.es, e.v].some((n) => norm(n) === q));
   return hit ? hit.c : text;
 }
+
+/** Identity key on a canonical language, so legacy free text and codes compare equal once the list is loaded. */
+export const canonicalKey = (p: PublicationIdentity): string => identityKey({ ...p, language: languageByName(p.language) });
 
 /** Entries whose names or code contain the query; an empty query matches everything. */
 export function searchLanguages(query: string): LanguageEntry[] {

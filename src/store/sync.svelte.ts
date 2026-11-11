@@ -10,11 +10,11 @@ export { warmDrive, type Summary };
 export type Conflict = { remote: Dataset; remoteMeta: DriveMeta; local: Summary; remoteSummary: Summary };
 export type Status = 'off' | 'idle' | 'syncing' | 'expired' | 'error' | 'conflict' | 'notConfigured';
 
-export const drive = $state({
+export const drive = $state<{ status: Status; lastSyncAt: string | null; conflict: Conflict | null; error: string | null }>({
   status: 'off',
-  lastSyncAt: null as string | null,
-  conflict: null as Conflict | null,
-  error: null as string | null,
+  lastSyncAt: null,
+  conflict: null,
+  error: null,
 });
 
 const DEBOUNCE_MS = 20_000;

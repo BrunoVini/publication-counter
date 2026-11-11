@@ -3,8 +3,8 @@
   import { app, act } from '../../store/app.svelte';
   import { i18n, t } from '../../i18n/index.svelte';
   import { addPublication, pubLanguageOf } from '../../domain/dataset';
-  import { identityKey, parsePastedList } from '../../domain/text';
-  import { languageByName, languageName, loadLanguages } from '../../domain/languages.svelte';
+  import { parsePastedList } from '../../domain/text';
+  import { canonicalKey, languageByName, languageName, loadLanguages } from '../../domain/languages.svelte';
   import LanguageSelect from '../shared/LanguageSelect.svelte';
   import { showToast } from '../shared/Toast.svelte';
   import { errorMessage } from '../count/errors';
@@ -28,10 +28,10 @@
   type Status = 'new' | 'paste' | 'catalogue';
   const rows = $derived.by(() => {
     // NOTE: archived publications are ignored, matching the domain's uniqueness rule.
-    const known = new Set(app.ds.publications.filter((p) => !p.archived).map(identityKey));
+    const known = new Set(app.ds.publications.filter((p) => !p.archived).map(canonicalKey));
     const seen = new Set<string>();
     return parsePastedList(text, language.trim(), languageByName).map((r) => {
-      const key = identityKey(r);
+      const key = canonicalKey(r);
       const status: Status = known.has(key) ? 'catalogue' : seen.has(key) ? 'paste' : 'new';
       seen.add(key);
       return { ...r, status };

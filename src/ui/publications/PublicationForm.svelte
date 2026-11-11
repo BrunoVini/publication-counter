@@ -70,7 +70,7 @@
     confirmDelete = false;
     if (!form.id) return;
     const id = form.id;
-    try { act((ds) => deletePublication(ds, id)); closeForm(); } catch (err) { fail(err); }
+    try { act((ds) => deletePublication(ds, id)); if (app.openItemId === id) app.openItemId = null; closeForm(); } catch (err) { fail(err); }
   }
 </script>
 

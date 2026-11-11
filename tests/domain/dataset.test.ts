@@ -4,6 +4,7 @@ import {
 } from '../../src/domain/dataset';
 import { itemTotal } from '../../src/domain/calc';
 import { pub, err, setup } from './dataset-fixtures';
+import { loadLanguages } from '../../src/domain/languages.svelte';
 
 test('emptyDataset defaults and overrides', () => {
   const ds = emptyDataset('x', { unit: 'kg' });
@@ -123,3 +124,11 @@ test('weighing without sample throws missingSample', () => {
   expect(err(() => addEntry(ds, c.id, b.id, { kind: 'weighing', weightG: 50 }, newId))).toBe('missingSample');
 });
 
+
+test('legacy free-text language and its code count as the same identity', async () => {
+  await loadLanguages();
+  const ds = emptyDataset('d1');
+  const newId = (() => { let n = 0; return () => `x${++n}`; })();
+  addPublication(ds, pub('Sentinela', { language: 'Inglês' }), newId);
+  expect(err(() => addPublication(ds, pub('Sentinela', { language: 'E' }), newId))).toBe('duplicate');
+});
