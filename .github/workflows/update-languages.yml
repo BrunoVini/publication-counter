@@ -1,0 +1,39 @@
+name: Update languages
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node scripts/update-languages.mjs
+      - name: Open a pull request when the list changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- src/data/languages.json; then
+            echo "No changes."
+            exit 0
+          fi
+          branch="chore/update-languages-$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add src/data/languages.json
+          git commit -m "chore(data): update languages list"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(data): update languages list" \
+            --body "Monthly refresh of src/data/languages.json from the public languages list."
