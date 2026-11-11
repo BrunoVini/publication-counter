@@ -13,6 +13,7 @@
   import { openPubcountText, pickTextFile, shareOrDownload } from '../shared/fileio';
   import ScaleEditor from './ScaleEditor.svelte';
   import HowItWorks from './HowItWorks.svelte';
+  import CloudSection from './CloudSection.svelte';
 
   const themes: Theme[] = ['system', 'light', 'dark'];
   const langs: { code: Lang; name: string }[] = [
@@ -151,7 +152,7 @@
 
     <section class="stack">
       <h2>{t('set.cloud')}</h2>
-      <button type="button" disabled>{t('set.cloudSoon')}</button>
+      <CloudSection />
     </section>
 
     <section class="stack">

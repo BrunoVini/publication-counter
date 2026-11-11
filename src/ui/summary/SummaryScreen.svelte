@@ -5,6 +5,7 @@
   import { localDate } from '../../domain/text';
   import { summaryRows } from '../../domain/summary';
   import { exportFileName, serializeDataset } from '../../domain/file';
+  import { syncNow } from '../../store/sync.svelte';
   import ConfirmDialog from '../shared/ConfirmDialog.svelte';
   import { showToast } from '../shared/Toast.svelte';
   import { shareOrDownload } from '../shared/fileio';
@@ -40,6 +41,8 @@
     try {
       act((ds) => finishCount(ds, countId, new Date().toISOString()));
       handover = true;
+      // NOTE: fire-and-forget; status and errors surface through the drive state.
+      syncNow().catch(() => {});
     } catch (e) { fail(e); }
   }
   function reopen() {

@@ -10,6 +10,8 @@
   import SummaryScreen from './summary/SummaryScreen.svelte';
   import ConfirmDialog from './shared/ConfirmDialog.svelte';
   import { isIosBrowser } from './shared/platform';
+  import { drive } from '../store/sync.svelte';
+  import ConflictDialog from './shared/ConflictDialog.svelte';
   import { applyIncoming } from '../launch';
 
   // NOTE: dismissing the iOS banner lasts for this page session only.
@@ -35,6 +37,9 @@
         <span aria-hidden="true">{app.saveState === 'saved' ? '✓' : app.saveState === 'saving' ? '…' : '!'}</span>
         {t(`save.${app.saveState}`)}
       </span>
+      {#if drive.status !== 'off' && drive.status !== 'notConfigured'}
+        <span class="save" role="status" aria-live="polite">{t(`drive.status.${drive.status}`)}</span>
+      {/if}
     </header>
 
     {#if app.saveState === 'unavailable'}
@@ -75,6 +80,7 @@
 {/if}
 <ConfirmDialog open={app.incomingFile !== null} title={t('set.openTitle')} message={t('set.openMessage')}
   confirmLabel={t('set.openConfirm')} danger onconfirm={confirmIncoming} oncancel={() => (app.incomingFile = null)} />
+<ConflictDialog />
 <Toast />
 
 <style>

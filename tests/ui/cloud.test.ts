@@ -1,0 +1,112 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
+
+const m = vi.hoisted(() => ({
+  drive: { status: 'off', error: null as string | null, lastSyncAt: null as string | null, conflict: null as unknown },
+  warmDrive: vi.fn(async () => {}),
+  connect: vi.fn(async () => {}),
+  reconnect: vi.fn(async () => {}),
+  syncNow: vi.fn(async () => {}),
+  disconnect: vi.fn(async () => {}),
+  resolveConflict: vi.fn(async () => {}),
+}));
+vi.mock('../../src/store/sync.svelte', () => m);
+
+import CloudSection from '../../src/ui/settings/CloudSection.svelte';
+import ConflictDialog from '../../src/ui/shared/ConflictDialog.svelte';
+import { i18n } from '../../src/i18n/index.svelte';
+
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
+});
+beforeEach(() => {
+  i18n.lang = 'en';
+  m.drive.status = 'off';
+  m.drive.error = null;
+  m.drive.lastSyncAt = null;
+  m.drive.conflict = null;
+  vi.clearAllMocks();
+});
+afterEach(cleanup);
+
+describe('CloudSection', () => {
+  test('not configured hides connect', () => {
+    m.drive.status = 'notConfigured';
+    render(CloudSection);
+    expect(screen.getByText('Google Drive backup is not configured.')).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  test('connect button calls connect', async () => {
+    render(CloudSection);
+    expect(m.warmDrive).toHaveBeenCalled();
+    await fireEvent.click(screen.getByRole('button', { name: 'Connect Google Drive' }));
+    expect(m.connect).toHaveBeenCalledTimes(1);
+  });
+
+  test('expired shows reconnect', async () => {
+    m.drive.status = 'expired';
+    render(CloudSection);
+    expect(screen.getByText('Login expired (about 1 hour)')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
+    expect(m.reconnect).toHaveBeenCalledTimes(1);
+  });
+
+  test('connected backs up and asks before disconnecting', async () => {
+    m.drive.status = 'idle';
+    m.drive.lastSyncAt = '2026-01-05T10:30:00.000Z';
+    render(CloudSection);
+    await fireEvent.click(screen.getByRole('button', { name: 'Back up now' }));
+    expect(m.syncNow).toHaveBeenCalled();
+    await fireEvent.click(screen.getByRole('button', { name: 'Disconnect' }));
+    expect(m.disconnect).not.toHaveBeenCalled();
+    expect(screen.getByText(/stays in your Drive/)).toBeTruthy();
+    const btns = screen.getAllByRole('button', { name: 'Disconnect' });
+    await fireEvent.click(btns[btns.length - 1]);
+    expect(m.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  test('error shows message and try again', async () => {
+    m.drive.status = 'error';
+    m.drive.error = 'Boom';
+    render(CloudSection);
+    expect(screen.getByText('Boom')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(m.syncNow).toHaveBeenCalled();
+  });
+});
+
+describe('ConflictDialog', () => {
+  const conflict = {
+    local: { modifiedAt: '', hasOpenCount: true, publications: 3 },
+    remoteSummary: { modifiedAt: '2026-01-05T10:30:00.000Z', hasOpenCount: false, publications: 7 },
+  };
+
+  test('conflict dialog shows both summaries and resolves with choice', async () => {
+    m.drive.status = 'conflict';
+    m.drive.conflict = conflict;
+    render(ConflictDialog);
+    expect(screen.getByText('unknown')).toBeTruthy();
+    expect(screen.getByText('3')).toBeTruthy();
+    expect(screen.getByText('7')).toBeTruthy();
+    expect(screen.getByText('The other version is kept as a local backup.')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: "Use this device's version" }));
+    expect(m.resolveConflict).toHaveBeenCalledWith('device');
+    await fireEvent.click(screen.getByRole('button', { name: 'Use the Drive version' }));
+    expect(m.resolveConflict).toHaveBeenCalledWith('drive');
+  });
+
+  test('conflict dialog ignores escape and backdrop', async () => {
+    m.drive.status = 'conflict';
+    m.drive.conflict = conflict;
+    const { container } = render(ConflictDialog);
+    const dlg = container.querySelector('dialog')!;
+    const ev = new Event('cancel', { cancelable: true });
+    dlg.dispatchEvent(ev);
+    await fireEvent.click(dlg);
+    expect(ev.defaultPrevented).toBe(true);
+    expect(m.resolveConflict).not.toHaveBeenCalled();
+    expect(dlg.hasAttribute('open')).toBe(true);
+  });
+});
