@@ -1,0 +1,7 @@
+# NOTE: 'unsafe-inline' for styles is needed because Svelte injects component styles.
+# NOTE: Plan B (Google sync) adds accounts.google.com and www.googleapis.com.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
