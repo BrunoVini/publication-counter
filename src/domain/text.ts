@@ -7,10 +7,13 @@ export interface PublicationIdentity {
 const norm = (s: string): string =>
   s
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
+
+/** Control characters (tab, newline, DEL...) become spaces; the file schema rejects them. */
+export const clean = (s: string): string => s.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
 
 export function identityKey(p: PublicationIdentity): string {
   return [p.name, p.language, p.variant].map(norm).join('\u0000');
@@ -18,7 +21,7 @@ export function identityKey(p: PublicationIdentity): string {
 
 export function parsePastedList(text: string, defaultLanguage: string): PublicationIdentity[] {
   const rows: PublicationIdentity[] = [];
-  for (const line of text.split(/\r?\n/)) {
+  for (const line of text.split(/\r\n|\r|\n/)) {
     const [name = '', language = '', variant = ''] = line.split('\t').map((c) => c.trim());
     if (!name) continue;
     rows.push({ name, language: language || defaultLanguage, variant });

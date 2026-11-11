@@ -132,16 +132,16 @@
   <form class="panel" onsubmit={save} aria-label={t(form.id ? 'pubs.edit' : 'pubs.new')}>
     <label class="field">
       <span>{t('pubs.name')}</span>
-      <input bind:value={form.name} autocomplete="off" aria-invalid={!!dupError} aria-describedby={dupError ? 'pub-dup' : undefined} />
+      <input maxlength="200" bind:value={form.name} autocomplete="off" aria-invalid={!!dupError} aria-describedby={dupError ? 'pub-dup' : undefined} />
     </label>
     {#if dupError}<p id="pub-dup" role="alert" class="err">{dupError}</p>{/if}
     <label class="field">
       <span>{t('pubs.language')}</span>
-      <input list="pub-langs" bind:value={form.language} autocomplete="off" />
+      <input maxlength="200" list="pub-langs" bind:value={form.language} autocomplete="off" />
     </label>
     <label class="field">
       <span>{t('pubs.variant')}</span>
-      <input list="pub-variants" bind:value={form.variant} autocomplete="off" />
+      <input maxlength="200" list="pub-variants" bind:value={form.variant} autocomplete="off" />
     </label>
     <datalist id="pub-langs">{#each languages as l (l)}<option value={l}></option>{/each}</datalist>
     <datalist id="pub-variants">{#each variants as v (v)}<option value={v}></option>{/each}</datalist>
@@ -200,9 +200,9 @@
       {#each shown as p (p.id)}
         <tr>
           {#if inline?.id === p.id}
-            <td><input aria-label={t('pubs.name')} bind:value={inline.name} /></td>
-            <td><input aria-label={t('pubs.language')} list="pub-langs" bind:value={inline.language} /></td>
-            <td><input aria-label={t('pubs.variant')} list="pub-variants" bind:value={inline.variant} /></td>
+            <td><input maxlength="200" aria-label={t('pubs.name')} bind:value={inline.name} /></td>
+            <td><input maxlength="200" aria-label={t('pubs.language')} list="pub-langs" bind:value={inline.language} /></td>
+            <td><input maxlength="200" aria-label={t('pubs.variant')} list="pub-variants" bind:value={inline.variant} /></td>
             <td class="acts">
               <button type="button" class="primary" onclick={saveInline}>{t('pubs.save')}</button>
               <button type="button" onclick={() => (inline = null)}>{t('dialog.cancel')}</button>

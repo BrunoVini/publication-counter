@@ -1,4 +1,4 @@
-import { identityKey } from './text';
+import { clean, identityKey } from './text';
 import type { Count, CountItem, Dataset, Entry, Publication, Sample, Settings } from './types';
 
 // NOTE: plain Omit collapses the Entry union, so distribute it to keep per-kind fields.
@@ -69,8 +69,15 @@ function assertUnique(ds: Dataset, p: Omit<Publication, 'id'>, selfId?: string):
   if (ds.publications.some((o) => o.id !== selfId && !o.archived && identityKey(o) === key)) fail('duplicate');
 }
 
-export function startCount(ds: Dataset, counter: string, nowIso: string, newId: () => string): Count {
+const cleanIdentity = <T extends { name?: string; language?: string; variant?: string }>(p: T): T => {
+  const out = { ...p };
+  for (const k of ['name', 'language', 'variant'] as const) if (typeof out[k] === 'string') out[k] = clean(out[k]);
+  return out;
+};
+
+export function startCount(ds: Dataset, rawCounter: string, nowIso: string, newId: () => string): Count {
   if (openCount(ds)) fail('countAlreadyOpen');
+  const counter = clean(rawCounter);
   const c: Count = {
     id: newId(), startedAt: nowIso, counter,
     items: ds.publications.filter((p) => !p.archived).map(newItem),
@@ -96,7 +103,7 @@ export function reopenCount(ds: Dataset, countId: string): void {
 export function addPublication(
   ds: Dataset, p: Omit<Publication, 'id' | 'archived'>, newId: () => string,
 ): Publication {
-  const full: Publication = { ...p, id: newId(), archived: false };
+  const full: Publication = { ...cleanIdentity(p), id: newId(), archived: false };
   if (full.sample) full.sample = copy(full.sample);
   assertValidPublication(full);
   assertUnique(ds, full);
@@ -112,7 +119,7 @@ export function updatePublication(
 ): void {
   const p = findPub(ds, id);
   // NOTE: archived only changes through archivePublication (it maintains the open count).
-  const { archived: _ignored, ...rest } = patch as Partial<Publication>;
+  const { archived: _ignored, ...rest } = cleanIdentity(patch) as Partial<Publication>;
   if (rest.sample) rest.sample = copy(rest.sample);
   const merged = { ...p, ...rest };
   assertValidPublication(merged);

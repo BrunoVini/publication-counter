@@ -3,6 +3,7 @@ import {
   addEntry, addPublication, archivePublication, copySample, emptyDataset, finishCount, markZero, openCount,
   reopenCount, resetItem, setEntered, setSample, startCount, updateEntry, updatePublication, deleteEntry,
 } from '../../src/domain/dataset';
+import { validateDataset } from '../../src/domain/file';
 import { itemTotal } from '../../src/domain/calc';
 
 const mkId = () => { let n = 0; return () => `id${++n}`; };
@@ -271,4 +272,17 @@ test('setEntered works on finished counts; finishCount twice throws', () => {
   setEntered(ds, c.id, a.id, true);
   expect(c.items[0].entered).toBe(true);
   expect(err(() => finishCount(ds, c.id, 't3'))).toBe('countFinished');
+});
+
+test('cleans publication fields, counter and keeps data schema-valid', () => {
+  const ds = emptyDataset('d');
+  const p = addPublication(ds, { name: 'A\tB', language: 'P\nT', variant: 'v\u0000', defaultMode: 'hand' }, () => 'p1');
+  expect([p.name, p.language, p.variant]).toEqual(['A B', 'P T', 'v']);
+  updatePublication(ds, 'p1', { name: 'C\tD', variant: '\t' });
+  expect([ds.publications[0].name, ds.publications[0].variant]).toEqual(['C D', '']);
+  expect(() => addPublication(ds, { name: '\t', language: '', variant: '', defaultMode: 'hand' }, () => 'p2')).toThrow('invalidPublication');
+  const c = startCount(ds, 'An\tna', '2026-01-01', () => 'c1');
+  expect(c.counter).toBe('An na');
+  expect(ds.settings.lastCounter).toBe('An na');
+  expect(validateDataset(ds)).toBe(true);
 });

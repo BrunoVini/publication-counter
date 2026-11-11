@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { identityKey, localDate, parsePastedList } from '../../src/domain/text';
+import { clean, identityKey, localDate, parsePastedList } from '../../src/domain/text';
 
 describe('identityKey', () => {
   it('ignores case, accents and repeated whitespace', () => {
@@ -32,6 +32,23 @@ describe('parsePastedList', () => {
     expect(parsePastedList(' A \t PT \t v \r\n\t PT\r\n', 'x')).toEqual([
       { name: 'A', language: 'PT', variant: 'v' },
     ]);
+  });
+});
+
+describe('pasted list line breaks and combining marks', () => {
+  it('splits on a lone CR as well', () => {
+    expect(parsePastedList('A\tPT\rB\tEN\r\nC', 'x').map((r) => r.name)).toEqual(['A', 'B', 'C']);
+  });
+  it('strips combining accent marks written as escapes', () => {
+    expect(identityKey({ name: 'Ação', language: 'e\u0301', variant: '' })).toBe(
+      identityKey({ name: 'acao', language: 'e', variant: '' }));
+  });
+});
+
+describe('clean', () => {
+  it('replaces control characters with spaces and trims', () => {
+    expect(clean('  A\tB\u0000C\u007f ')).toBe('A B C');
+    expect(clean('\t')).toBe('');
   });
 });
 

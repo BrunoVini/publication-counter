@@ -99,6 +99,14 @@ describe('app', () => {
     expect(app.ds.counts[0].items[0].entries).toHaveLength(1);
   });
 
+  it('a publication name with a tab is sanitised, not persisted raw', async () => {
+    await init();
+    act((ds) => addPublication(ds, { name: 'A\tB', language: 'en', variant: '', defaultMode: 'weigh' }, () => 'pt'));
+    expect(app.ds.publications[0].name).toBe('A B');
+    await flushSaves();
+    expect((await loadDataset())?.publications[0].name).toBe('A B');
+  });
+
   it('replaceDataset backs up previous', async () => {
     await init();
     const prev = app.ds.datasetId;

@@ -186,7 +186,7 @@
       <h2 id="who-title" class="visually-hidden">{t('count.new')}</h2>
       <label class="field">
         <span>{t('count.who')}</span>
-        <input bind:value={name} autocomplete="off" aria-invalid={nameError} aria-describedby={nameError ? 'who-err' : undefined} />
+        <input maxlength="200" bind:value={name} autocomplete="off" aria-invalid={nameError} aria-describedby={nameError ? 'who-err' : undefined} />
       </label>
       {#if nameError}<p id="who-err" role="alert" class="err">{t('count.who.required')}</p>{/if}
       <div class="actions">

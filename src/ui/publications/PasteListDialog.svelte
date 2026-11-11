@@ -71,7 +71,7 @@
     </label>
     <label class="field">
       <span>{t('pubs.paste.language')}</span>
-      <input bind:value={language} autocomplete="off" />
+      <input maxlength="200" bind:value={language} autocomplete="off" />
     </label>
     {#if rows.length}
       <table>

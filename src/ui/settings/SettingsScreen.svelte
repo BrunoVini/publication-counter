@@ -4,7 +4,7 @@
   import { getCorrupt, listBackups, type Backup } from '../../store/persist';
   import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { exportFileName, parseDataset, serializeDataset } from '../../domain/file';
-  import { localDate } from '../../domain/text';
+  import { clean, localDate } from '../../domain/text';
   import { fromGrams } from '../../domain/units';
   import type { Dataset, Lang, ScaleRange, Theme, WeightUnit } from '../../domain/types';
   import { applyTheme } from '../theme';
@@ -40,7 +40,7 @@
   function chooseLang(l: Lang) { i18n.lang = l; act((ds) => { ds.settings.language = l; }); }
   function chooseUnit(u: WeightUnit) { act((ds) => { ds.settings.unit = u; }); }
   function saveLocation(e: Event) {
-    const v = (e.currentTarget as HTMLInputElement).value.trim();
+    const v = clean((e.currentTarget as HTMLInputElement).value);
     act((ds) => { ds.settings.locationName = v || undefined; });
   }
   function saveScale(scale: ScaleRange[]) { act((ds) => { ds.settings.scale = scale; }); editingScale = false; }
@@ -145,7 +145,7 @@
         </div>
       {/if}
       <label class="field">{t('set.location')}
-        <input type="text" value={settings.locationName ?? ''} onchange={saveLocation} />
+        <input type="text" maxlength="200" value={settings.locationName ?? ''} onchange={saveLocation} />
       </label>
     </section>
 
