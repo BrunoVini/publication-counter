@@ -1,0 +1,73 @@
+import * as v from 'valibot';
+import type { Dataset } from './types';
+
+export const CURRENT_FORMAT = 1;
+
+const text = v.pipe(v.string(), v.maxLength(200), v.regex(/^[^\u0000-\u001F]*$/));
+const id = v.pipe(text, v.minLength(1));
+const date = v.pipe(v.string(), v.maxLength(64));
+const posNum = v.pipe(v.number(), v.finite(), v.gtValue(0));
+const posInt = v.pipe(v.number(), v.integer(), v.minValue(1));
+
+const sample = v.strictObject({ units: posInt, weightG: posNum });
+const entry = v.variant('kind', [
+  v.strictObject({ id, kind: v.literal('sample'), units: posInt, weightG: posNum }),
+  v.strictObject({ id, kind: v.literal('weighing'), weightG: posNum }),
+  v.strictObject({ id, kind: v.literal('sealed'), packs: posInt, perPack: posInt }),
+  v.strictObject({ id, kind: v.literal('hand'), units: posInt }),
+]);
+
+const schema = v.strictObject({
+  formatVersion: v.literal(1),
+  datasetId: id,
+  settings: v.strictObject({
+    unit: v.picklist(['g', 'kg', 'lb', 'oz']),
+    scale: v.nullable(v.array(v.strictObject({ upToG: posNum, resolutionG: posNum }))),
+    theme: v.picklist(['light', 'dark', 'system']),
+    language: v.optional(v.picklist(['pt', 'en', 'es'])),
+    locationName: v.optional(text),
+    lastCounter: v.optional(text),
+    firstRunDone: v.boolean(),
+  }),
+  publications: v.array(v.strictObject({
+    id, name: text, language: text, variant: text,
+    sample: v.optional(sample), packSize: v.optional(posInt),
+    defaultMode: v.picklist(['weigh', 'hand']), archived: v.boolean(),
+  })),
+  counts: v.array(v.strictObject({
+    id, startedAt: date, finishedAt: v.optional(date), counter: text,
+    items: v.array(v.strictObject({
+      publicationId: id, sample: v.optional(sample), entries: v.array(entry),
+      zero: v.boolean(), entered: v.boolean(),
+    })),
+  })),
+});
+
+// NOTE: v1 needs no migration; future versions chain upgrades here before validation.
+const migrate = (raw: unknown): unknown => raw;
+
+function structureOk(ds: Dataset): boolean {
+  const ids = new Set(ds.publications.map((p) => p.id));
+  return ids.size === ds.publications.length
+    && ds.counts.filter((c) => !c.finishedAt).length <= 1
+    && ds.counts.every((c) => c.items.every((i) => ids.has(i.publicationId)));
+}
+
+export const serializeDataset = (ds: Dataset): string => JSON.stringify(ds, null, 2);
+
+export function parseDataset(textIn: string):
+  { ok: true; dataset: Dataset } | { ok: false; error: 'notJson' | 'invalid' | 'tooNew' } {
+  let raw: unknown;
+  try { raw = JSON.parse(textIn); } catch { return { ok: false, error: 'notJson' }; }
+  const ver = (raw as { formatVersion?: unknown } | null)?.formatVersion;
+  if (typeof ver === 'number' && ver > CURRENT_FORMAT) return { ok: false, error: 'tooNew' };
+  const r = v.safeParse(schema, migrate(raw));
+  if (!r.success || !structureOk(r.output as Dataset)) return { ok: false, error: 'invalid' };
+  return { ok: true, dataset: r.output as Dataset };
+}
+
+export function exportFileName(ds: Dataset, today: string): string {
+  const slug = (ds.settings.locationName ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `${slug || 'pubcount'}-${today}.pubcount`;
+}
