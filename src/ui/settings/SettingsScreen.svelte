@@ -4,6 +4,7 @@
   import { getCorrupt, listBackups, type Backup } from '../../store/persist';
   import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { exportFileName, parseDataset, serializeDataset } from '../../domain/file';
+  import { localDate } from '../../domain/text';
   import { fromGrams } from '../../domain/units';
   import type { Dataset, Lang, ScaleRange, Theme, WeightUnit } from '../../domain/types';
   import { applyTheme } from '../theme';
@@ -29,7 +30,6 @@
   let corrupt = $state<unknown>(undefined);
 
   const settings = $derived(app.ds.settings);
-  const today = () => new Date().toISOString().slice(0, 10);
   const num = (g: number) => fmtNumber(fromGrams(g, settings.unit), 3);
   const when = (iso: string) => `${fmtDate(iso)} ${new Date(iso).toLocaleTimeString(i18n.lang, { hour: '2-digit', minute: '2-digit' })}`;
   const reason = (r: string) => { const k = `set.reason.${r}`; const m = t(k); return m === k ? r : m; };
@@ -48,12 +48,12 @@
 
   async function handover() {
     try {
-      await shareOrDownload(exportFileName(app.ds, today()), serializeDataset($state.snapshot(app.ds) as Dataset), 'application/json');
+      await shareOrDownload(exportFileName(app.ds, localDate()), serializeDataset($state.snapshot(app.ds) as Dataset), 'application/json');
     } catch { showToast(t('set.handoverErr')); }
   }
   async function exportCorrupt() {
     try {
-      await shareOrDownload(`pubcount-unreadable-${today()}.json`, JSON.stringify(corrupt, null, 2), 'application/json');
+      await shareOrDownload(`pubcount-unreadable-${localDate()}.json`, JSON.stringify(corrupt, null, 2), 'application/json');
     } catch { showToast(t('set.handoverErr')); }
   }
   async function replaceWith(run: () => Promise<string>) {

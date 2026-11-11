@@ -143,6 +143,26 @@ describe('summary screen', () => {
   });
 });
 
+describe('local dates', () => {
+  test('excel header, sheet and file name use the count start in local time, not UTC', async () => {
+    const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process.env;
+    const tz = env.TZ;
+    env.TZ = 'America/Sao_Paulo'; // UTC-3: 01:30Z on the 12th is still the 11th, and not today locally
+    try {
+      app.ds.counts[1].startedAt = '2026-03-12T01:30:00.000Z';
+      render(SummaryScreen, { countId: 'cur' });
+      await fireEvent.click(screen.getByRole('button', { name: 'Excel' }));
+      await vi.waitFor(() => expect(shareOrDownload).toHaveBeenCalled());
+      expect(vi.mocked(shareOrDownload).mock.calls[0][0]).toBe('centro-2026-03-11.xlsx');
+      expect((writeXlsxFile.mock.calls[0][1] as { sheet: string }).sheet).toBe('2026-03-11');
+      const data = writeXlsxFile.mock.calls[0][0] as unknown[][][];
+      expect(data[0][0]).toBe('Centro · 2026-03-11 · Ana');
+    } finally {
+      if (tz === undefined) delete env.TZ; else env.TZ = tz;
+    }
+  });
+});
+
 describe('exportExcel', () => {
   test('excel export called with rows', async () => {
     const rows = summaryRows(app.ds, 'cur');

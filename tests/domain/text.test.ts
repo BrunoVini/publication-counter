@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { identityKey, parsePastedList } from '../../src/domain/text';
+import { identityKey, localDate, parsePastedList } from '../../src/domain/text';
 
 describe('identityKey', () => {
   it('ignores case, accents and repeated whitespace', () => {
@@ -32,5 +32,12 @@ describe('parsePastedList', () => {
     expect(parsePastedList(' A \t PT \t v \r\n\t PT\r\n', 'x')).toEqual([
       { name: 'A', language: 'PT', variant: 'v' },
     ]);
+  });
+});
+
+describe('localDate', () => {
+  it('formats the local calendar fields as YYYY-MM-DD', () => {
+    expect(localDate(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
+    expect(localDate(new Date(2026, 11, 31, 0, 0))).toBe('2026-12-31');
   });
 });

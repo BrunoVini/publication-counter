@@ -2,6 +2,7 @@
   import { app, act } from '../../store/app.svelte';
   import { fmtDate, fmtNumber, t } from '../../i18n/index.svelte';
   import { finishCount, reopenCount, setEntered } from '../../domain/dataset';
+  import { localDate } from '../../domain/text';
   import { summaryRows } from '../../domain/summary';
   import { exportFileName, serializeDataset } from '../../domain/file';
   import ConfirmDialog from '../shared/ConfirmDialog.svelte';
@@ -28,7 +29,6 @@
   let handover = $state(false);
   let error = $state('');
 
-  const today = () => new Date().toISOString().slice(0, 10);
   const fail = (e: unknown) => {
     const code = (e as Error)?.message;
     error = code === 'countAlreadyOpen' ? t('summary.err.countAlreadyOpen') : t('summary.err.generic');
@@ -49,13 +49,13 @@
   async function exportFile() {
     handover = false;
     try {
-      await shareOrDownload(exportFileName(app.ds, today()), serializeDataset($state.snapshot(app.ds)), 'application/json');
+      await shareOrDownload(exportFileName(app.ds, localDate()), serializeDataset($state.snapshot(app.ds)), 'application/json');
     } catch { showToast(t('summary.err.generic')); }
   }
   async function excel() {
     if (!count) return;
     try {
-      await exportExcel(rows, { location: app.ds.settings.locationName, date: today(), counter: count.counter });
+      await exportExcel(rows, { location: app.ds.settings.locationName, date: localDate(new Date(count.startedAt)), counter: count.counter });
     } catch { showToast(t('summary.err.excel')); }
   }
   function showNotCounted() {

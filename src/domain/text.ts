@@ -25,3 +25,9 @@ export function parsePastedList(text: string, defaultLanguage: string): Publicat
   }
   return rows;
 }
+
+/** YYYY-MM-DD from a Date's local fields (never UTC, so late evenings keep their own day). */
+export function localDate(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
