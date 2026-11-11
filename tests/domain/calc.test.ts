@@ -53,3 +53,36 @@ test('fraction warning', () => {
   expect(fractionWarning({ units: 24, margin: 1, weighedUnits: 23.5 })).toBe(true);
   expect(fractionWarning({ units: 24, margin: 1, weighedUnits: 23.95 })).toBe(false);
 });
+
+test('float noise does not inflate the ceil', () => {
+  expect(itemTotal(item([w(1222.5)]), scale)!.margin).toBe(5);
+  expect(sampleAdvice({ units: 29, weightG: 100 }, [{ upToG: 1000, resolutionG: 0.5 }]).suggestedUnits).toBe(29);
+});
+test('invalid entries throw', () => {
+  const bad: Entry[] = [
+    w(0), w(NaN), w(-5),
+    { id: 'x', kind: 'sealed', packs: 0, perPack: 10 },
+    { id: 'x', kind: 'sealed', packs: 2, perPack: 1.5 },
+    { id: 'x', kind: 'hand', units: -1 },
+    { id: 'x', kind: 'sample', units: 5, weightG: 0 },
+  ];
+  for (const e of bad) expect(() => itemTotal(item([e]), scale)).toThrow('invalidEntry');
+});
+test('scale error dominates the 1% floor', () => {
+  expect(itemTotal(item([w(50)], { units: 2, weightG: 10 }), null)!.margin).toBe(2);
+});
+test('resolution boundaries', () => {
+  expect(resolutionAt(scale, 500)).toBe(0.1);
+  expect(resolutionAt(scale, 20000)).toBe(1);
+});
+test('outlier median with an even count', () => {
+  const it = item([w(100), w(200), w(300), w(400)], { units: 100, weightG: 100 }); // median 250
+  expect(checkWeighing(760, it, null)).toContain('outlier');
+  expect(checkWeighing(740, it, null)).not.toContain('outlier');
+});
+test('validateScale extra codes', () => {
+  expect(validateScale([])).toBe('empty');
+  expect(validateScale([{ upToG: 0, resolutionG: 1 }])).toBe('nonPositive');
+  expect(validateScale([{ upToG: 500, resolutionG: -1 }])).toBe('nonPositive');
+  expect(validateScale([{ upToG: NaN, resolutionG: 1 }])).toBe('nonPositive');
+});

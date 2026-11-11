@@ -13,11 +13,18 @@ export function capacityG(scale: ScaleRange[] | null): number | null {
   return scale && scale.length > 0 ? scale[scale.length - 1].upToG : null;
 }
 
-export function validateScale(scale: ScaleRange[]): 'ok' | 'notAscending' | 'resolutionDecreases' | 'empty' {
+// NOTE: snaps floating-point noise just above an integer so ceil does not add a spurious unit.
+const ceilSafe = (x: number): number => Math.ceil(x - 1e-9);
+
+export function validateScale(
+  scale: ScaleRange[],
+): 'ok' | 'notAscending' | 'resolutionDecreases' | 'empty' | 'nonPositive' {
   if (scale.length === 0) return 'empty';
   for (let i = 0; i < scale.length; i++) {
     const r = scale[i];
-    if (!(r.upToG > 0) || !(r.resolutionG > 0)) return 'notAscending';
+    if (!(Number.isFinite(r.upToG) && r.upToG > 0) || !(Number.isFinite(r.resolutionG) && r.resolutionG > 0)) {
+      return 'nonPositive';
+    }
     if (i > 0 && r.upToG <= scale[i - 1].upToG) return 'notAscending';
     if (i > 0 && r.resolutionG < scale[i - 1].resolutionG) return 'resolutionDecreases';
   }
@@ -35,9 +42,17 @@ export function itemTotal(item: CountItem, scale: ScaleRange[] | null): ItemTota
   if (!item.zero && item.entries.length === 0) return null;
   if (item.zero) return { units: 0, margin: 0, weighedUnits: 0 };
 
+  const posG = (x: number) => Number.isFinite(x) && x > 0;
+  const posInt = (x: number) => Number.isInteger(x) && x >= 1;
   const weights: number[] = [];
   let exact = 0;
   for (const e of item.entries) {
+    const valid =
+      e.kind === 'weighing' ? posG(e.weightG)
+      : e.kind === 'sample' ? posInt(e.units) && posG(e.weightG)
+      : e.kind === 'hand' ? posInt(e.units)
+      : posInt(e.packs) && posInt(e.perPack);
+    if (!valid) throw new Error('invalidEntry');
     if (e.kind === 'weighing') weights.push(e.weightG);
     else if (e.kind === 'sample' || e.kind === 'hand') exact += e.units;
     else exact += e.packs * e.perPack;
@@ -54,7 +69,7 @@ export function itemTotal(item: CountItem, scale: ScaleRange[] | null): ItemTota
     const relW = Math.sqrt(sumD2) / totalW;
     const relS = resolutionAt(scale, item.sample.weightG) / item.sample.weightG;
     const scaleErr = weighedUnits * Math.sqrt(relW ** 2 + relS ** 2);
-    margin = Math.ceil(Math.max(scaleErr, VARIATION_FLOOR * weighedUnits));
+    margin = ceilSafe(Math.max(scaleErr, VARIATION_FLOOR * weighedUnits));
   }
   return { units: Math.round(weighedUnits + exact), margin, weighedUnits };
 }
@@ -62,7 +77,7 @@ export function itemTotal(item: CountItem, scale: ScaleRange[] | null): ItemTota
 export function sampleAdvice(s: Sample, scale: ScaleRange[] | null): { ok: boolean; suggestedUnits: number } {
   const d = resolutionAt(scale, s.weightG);
   const u = unitWeightG(s);
-  return { ok: s.units >= 10 && s.weightG >= 200 * d, suggestedUnits: Math.max(10, Math.ceil((200 * d) / u)) };
+  return { ok: s.units >= 10 && s.weightG >= 200 * d, suggestedUnits: Math.max(10, ceilSafe((200 * d) / u)) };
 }
 
 export function fractionWarning(t: ItemTotal): boolean {
