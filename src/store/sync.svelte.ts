@@ -1,11 +1,12 @@
 import { app, replaceDataset } from './app.svelte';
 import { loadDriveState, pushBackup, saveDriveState, type DriveState } from './persist';
-import { exportBaseName, parseDataset, serializeDataset } from '../domain/file';
+import { parseDataset, serializeDataset } from '../domain/file';
+import { cachedGis, describeError, fetchRemote, gone, loadApi, loadGis, summary, uploadLocal, warmDrive, type Summary } from './sync-remote';
 import type { Dataset } from '../domain/types';
 import type { DriveMeta } from './drive/api';
 import { t } from '../i18n/index.svelte';
 
-export type Summary = { modifiedAt: string; hasOpenCount: boolean; publications: number };
+export { warmDrive, type Summary };
 export type Conflict = { remote: Dataset; remoteMeta: DriveMeta; local: Summary; remoteSummary: Summary };
 export type Status = 'off' | 'idle' | 'syncing' | 'expired' | 'error' | 'conflict' | 'notConfigured';
 
@@ -23,18 +24,6 @@ let st: DriveState = { connected: false };
 let timer: ReturnType<typeof setTimeout> | undefined;
 let chain: Promise<unknown> = Promise.resolve();
 
-// NOTE: lazy so the Drive code stays out of the first-load bundle.
-const loadApi = () => import('./drive/api');
-// NOTE: cached so a click handler can call requestToken with no await before it once warmed up.
-let gisMod: typeof import('./drive/gis') | null = null;
-const loadGis = async () => (gisMod ??= await import('./drive/gis'));
-
-/** Fire-and-forget: loads the Drive sign-in module and script so a later click opens the popup at once. */
-export function warmDrive(): Promise<void> {
-  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) return Promise.resolve();
-  return loadGis().then((g) => g.preloadGis()).catch(() => {});
-}
-
 // NOTE: serialises every sync operation; a failed job never blocks the next one.
 const enqueue = <T>(job: () => Promise<T>): Promise<T> => {
   const run = chain.then(job);
@@ -44,9 +33,6 @@ const enqueue = <T>(job: () => Promise<T>): Promise<T> => {
 
 const valid = () => tok !== null && tok.expiresAt > Date.now();
 const local = (): Dataset => $state.snapshot(app.ds);
-
-const summary = (ds: Dataset, modifiedAt: string): Summary =>
-  ({ modifiedAt, hasOpenCount: ds.counts.some((c) => !c.finishedAt), publications: ds.publications.length });
 
 async function store(meta: DriveMeta, lastSyncAt = new Date().toISOString()): Promise<void> {
   st = { fileId: meta.id, version: meta.version, lastSyncAt, connected: true };
@@ -58,44 +44,14 @@ async function store(meta: DriveMeta, lastSyncAt = new Date().toISOString()): Pr
 }
 
 function fail(e: unknown): void {
-  const kind = (e as { name?: string; kind?: string } | null)?.name === 'DriveError' ? (e as { kind: string }).kind : '';
-  if (kind === 'auth') {
-    tok = null;
-    drive.status = 'expired';
-    drive.error = null;
-    return;
-  }
-  drive.status = 'error';
-  drive.error = t(
-    e === 'backupFailed' ? 'drive.err.backupFailed'
-      : typeof e === 'string' && e.startsWith('remote:') ? `drive.err.${e.slice(7)}`
-      : kind ? 'drive.err.network' : 'drive.err.generic',
-  );
-}
-
-async function fetchRemote(token: string, id: string): Promise<Dataset> {
-  const r = parseDataset(await (await loadApi()).download(token, id));
-  if (!r.ok) throw `remote:${r.error}`;
-  return r.dataset;
-}
-
-async function uploadLocal(token: string, id?: string): Promise<{ meta: DriveMeta; at: string }> {
-  const api = await loadApi();
-  // NOTE: stamped before the snapshot so a save made during the upload is never older than lastSyncAt.
-  const at = new Date().toISOString();
-  const ds = local();
-  // NOTE: the name is only used on create; updates keep the existing Drive name.
-  const meta = await api.upload(token, {
-    id,
-    folderId: id ? '' : await api.ensureFolder(token),
-    name: `${exportBaseName(ds)}.pubcount`,
-    datasetId: ds.datasetId,
-    body: serializeDataset(ds),
-  });
-  return { meta, at };
+  const { auth, key } = describeError(e);
+  if (auth) tok = null;
+  drive.status = auth ? 'expired' : 'error';
+  drive.error = key && t(key);
 }
 
 const storeUpload = ({ meta, at }: { meta: DriveMeta; at: string }) => store(meta, at);
+const upload = (token: string, id?: string) => uploadLocal(token, local, id);
 
 /** Local and remote both exist: link when equal, otherwise open the conflict. Never uploads. */
 async function compare(remote: Dataset, meta: DriveMeta): Promise<void> {
@@ -118,7 +74,7 @@ async function link(token: string): Promise<void> {
   const ds = local();
   // NOTE: a fresh install has its own datasetId, so fall back to the newest backup in the app folder.
   const meta = (await api.findFile(token, ds.datasetId)) ?? (await api.findLatestInFolder(token, await api.ensureFolder(token)));
-  if (!meta) return storeUpload(await uploadLocal(token));
+  if (!meta) return storeUpload(await upload(token));
   const remote = await fetchRemote(token, meta.id);
   if (ds.publications.length === 0) {
     await replaceDataset(remote, 'drive restore');
@@ -132,21 +88,17 @@ async function step(fn: () => Promise<void>): Promise<void> {
   try { await fn(); } catch (e) { fail(e); }
 }
 
-function adopt(r: { token: string; expiresAt: number }): void {
-  tok = r;
-}
-
 export async function connect(): Promise<void> {
   // NOTE: no await before the token request once warmed up, so the popup keeps the click gesture.
-  const gis = gisMod ?? await loadGis();
+  const gis = cachedGis() ?? await loadGis();
   try {
-    adopt(await gis.requestToken(true));
+    tok = await gis.requestToken(true);
   } catch {
     drive.status = 'off';
     drive.error = t('drive.err.cancelled');
     return;
   }
-  const token = tok!.token;
+  const token = tok.token;
   st = { ...st, connected: true };
   await enqueue(() => step(async () => {
     await link(token);
@@ -170,7 +122,7 @@ export function syncNow(): Promise<void> {
       } catch (e) {
         if ((e as { kind?: string })?.kind !== 'notFound') throw e;
         // NOTE: the file was deleted on Drive; recreate it from the local data.
-        return storeUpload(await uploadLocal(token));
+        return storeUpload(await upload(token));
       }
       if (meta.version !== st.version) return compare(await fetchRemote(token, meta.id), meta);
       // NOTE: nothing saved since the last sync and the remote is unchanged: nothing to upload.
@@ -181,7 +133,7 @@ export function syncNow(): Promise<void> {
       }
       // NOTE: a change on another device between getMeta and this upload can still be overwritten;
       // accepted, there is no If-Match on the upload.
-      return storeUpload(await uploadLocal(token, st.fileId));
+      return storeUpload(await upload(token, st.fileId));
     });
   });
 }
@@ -202,15 +154,15 @@ export function resolveConflict(choice: 'device' | 'drive'): Promise<void> {
       const now = await api.getMeta(token, c.remoteMeta.id);
       if (now.version !== c.remoteMeta.version) return compare(await fetchRemote(token, now.id), now);
       if (!(await pushBackup(c.remote, 'drive conflict'))) throw 'backupFailed';
-      return storeUpload(await uploadLocal(token, c.remoteMeta.id));
+      return storeUpload(await upload(token, c.remoteMeta.id));
     });
   });
 }
 
 export async function reconnect(): Promise<void> {
-  const gis = gisMod ?? await loadGis();
+  const gis = cachedGis() ?? await loadGis();
   try {
-    adopt(await gis.requestToken(false));
+    tok = await gis.requestToken(false);
   } catch (e) {
     // NOTE: one silent attempt only; the next click retries, which keeps every popup inside a gesture.
     const cancelled = e instanceof gis.AuthCancelled;
@@ -245,8 +197,6 @@ export async function disconnect(): Promise<void> {
   await enqueue(resetLink);
   await revokeBestEffort(old);
 }
-
-const gone = (p: Promise<void>) => p.catch((e) => { if ((e as { kind?: string })?.kind !== 'notFound') throw e; });
 
 /** Deletes the backup file and the app folder from Drive, then disconnects. Keeps the link on failure so it can be retried. */
 export function deleteDriveBackup(): Promise<void> {
