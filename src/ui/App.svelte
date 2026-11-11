@@ -5,6 +5,7 @@
   import Toast from './shared/Toast.svelte';
   import FirstRun from './FirstRun.svelte';
   import CountScreen from './count/CountScreen.svelte';
+  import PublicationsScreen from './publications/PublicationsScreen.svelte';
   import SummaryScreen from './summary/SummaryScreen.svelte';
 
   const tabs = ['count', 'publications', 'settings'] as const;
@@ -45,6 +46,8 @@
         {:else}
           <CountScreen />
         {/if}
+      {:else if app.tab === 'publications'}
+        <PublicationsScreen />
       {/if}
     </main>
   </div>

@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import App from '../../src/ui/App.svelte';
 import { app, flushSaves } from '../../src/store/app.svelte';
@@ -20,6 +20,11 @@ vi.mock('../../src/ui/shared/fileio', async (orig) => {
 });
 
 let n = 0;
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
+});
+
 beforeEach(() => {
   setStore(createStore(`fr${n++}`, 'kv')); app.ds = emptyDataset('first'); app.tab = 'settings'; app.pasteOpen = false; i18n.lang = 'pt'; });
 afterEach(async () => { cleanup(); await flushSaves(); i18n.lang = 'en'; app.tab = 'count'; });
