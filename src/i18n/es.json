@@ -300,5 +300,19 @@
   "drive.conflict.pubs": "Publicaciones",
   "drive.conflict.useDevice": "Usar la versión de este dispositivo",
   "drive.conflict.useDrive": "Usar la versión de Drive",
-  "drive.conflict.kept": "La otra versión se guarda como copia local."
+  "drive.conflict.kept": "La otra versión se guarda como copia local.",
+  "dialog.typeToConfirm": "Escribe {word} para confirmar",
+  "set.wipe": "Borrar datos de este dispositivo",
+  "set.wipeTitle": "¿Borrar todos los datos de este dispositivo?",
+  "set.wipeMessage": "Esto elimina todas las publicaciones, conteos, ajustes y copias locales de este dispositivo. La copia en Google Drive, si existe, no se toca. Antes de continuar, considera \"Pasar datos\" (exportar un archivo .pubcount) o \"Copiar ahora\".",
+  "set.wipeNext": "Continuar",
+  "set.wipeTitle2": "¿Seguro?",
+  "set.wipeMessage2": "Esto no se puede deshacer. La app se reiniciará vacía.",
+  "set.wipeConfirm": "Borrar todo",
+  "set.wipeWord": "BORRAR",
+  "set.wipeErr": "No se pudieron borrar los datos de este dispositivo.",
+  "drive.delete": "Borrar copia de Drive y desconectar",
+  "drive.deleteTitle": "¿Borrar la copia de Drive?",
+  "drive.deleteMessage": "Esto elimina de forma permanente la carpeta \"Publication Counter\" y el archivo de copia que la app creó en tu Google Drive, y revoca el acceso de la app a tu cuenta de Google. Los datos de este dispositivo se conservan.",
+  "drive.deleteExpiredHint": "Reconecta primero para borrar la copia de Drive."
 }

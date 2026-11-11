@@ -1,4 +1,4 @@
-import { createStore, get, set, type UseStore } from 'idb-keyval';
+import { clear, createStore, get, set, type UseStore } from 'idb-keyval';
 import { parseDataset } from '../domain/file';
 import type { Dataset } from '../domain/types';
 
@@ -58,3 +58,6 @@ export async function loadDriveState(): Promise<DriveState> {
 export async function saveDriveState(s: DriveState): Promise<boolean> {
   try { await set('drive', s, kv()); return true; } catch { return false; }
 }
+
+/** Removes everything this app keeps on the device. Throws when the store cannot be cleared. */
+export const clearAll = (): Promise<void> => clear(kv());

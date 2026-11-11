@@ -8,6 +8,7 @@ const m = vi.hoisted(() => ({
   reconnect: vi.fn(async () => {}),
   syncNow: vi.fn(async () => {}),
   disconnect: vi.fn(async () => {}),
+  deleteDriveBackup: vi.fn(async () => {}),
   resolveConflict: vi.fn(async () => {}),
 }));
 vi.mock('../../src/store/sync.svelte', () => m);
@@ -147,5 +148,31 @@ describe('App status', () => {
     m.drive.status = 'syncing';
     render(App);
     expect(screen.getByText('Drive: backing up')).toBeTruthy();
+  });
+});
+
+describe('CloudSection delete backup', () => {
+  test('connected shows an enabled delete button that confirms then deletes', async () => {
+    m.drive.status = 'idle';
+    render(CloudSection);
+    const btn = screen.getByRole('button', { name: 'Delete Drive backup and disconnect' }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    await fireEvent.click(btn);
+    expect(m.deleteDriveBackup).not.toHaveBeenCalled();
+    const buttons = screen.getAllByRole('button', { name: 'Delete Drive backup and disconnect' });
+    await fireEvent.click(buttons[buttons.length - 1]);
+    expect(m.deleteDriveBackup).toHaveBeenCalledTimes(1);
+  });
+
+  test('expired shows it disabled with a reconnect hint', () => {
+    m.drive.status = 'expired';
+    render(CloudSection);
+    expect((screen.getByRole('button', { name: 'Delete Drive backup and disconnect' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText('Reconnect first to delete the Drive backup.')).toBeTruthy();
+  });
+
+  test('off hides it', () => {
+    render(CloudSection);
+    expect(screen.queryByRole('button', { name: 'Delete Drive backup and disconnect' })).toBeNull();
   });
 });

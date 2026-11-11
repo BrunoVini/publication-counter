@@ -300,5 +300,19 @@
   "drive.conflict.pubs": "Publicações",
   "drive.conflict.useDevice": "Usar a versão deste aparelho",
   "drive.conflict.useDrive": "Usar a versão do Drive",
-  "drive.conflict.kept": "A outra versão fica guardada como backup local."
+  "drive.conflict.kept": "A outra versão fica guardada como backup local.",
+  "dialog.typeToConfirm": "Digite {word} para confirmar",
+  "set.wipe": "Apagar dados deste aparelho",
+  "set.wipeTitle": "Apagar todos os dados deste aparelho?",
+  "set.wipeMessage": "Isto remove todas as publicações, contagens, configurações e backups locais deste aparelho. O backup no Google Drive, se houver, não é afetado. Antes de continuar, considere \"Passar dados\" (exportar um arquivo .pubcount) ou \"Fazer backup agora\".",
+  "set.wipeNext": "Continuar",
+  "set.wipeTitle2": "Tem certeza?",
+  "set.wipeMessage2": "Isto não pode ser desfeito. O app reiniciará vazio.",
+  "set.wipeConfirm": "Apagar tudo",
+  "set.wipeWord": "APAGAR",
+  "set.wipeErr": "Não foi possível apagar os dados deste aparelho.",
+  "drive.delete": "Apagar backup do Drive e desconectar",
+  "drive.deleteTitle": "Apagar o backup do Drive?",
+  "drive.deleteMessage": "Isto apaga permanentemente a pasta \"Publication Counter\" e o arquivo de backup que o app criou no seu Google Drive, e revoga o acesso do app à sua conta Google. Os dados neste aparelho são mantidos.",
+  "drive.deleteExpiredHint": "Reconecte primeiro para apagar o backup do Drive."
 }

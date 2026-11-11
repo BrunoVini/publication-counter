@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { act, app, replaceDataset } from '../../store/app.svelte';
+  import { act, app, replaceDataset, wipeDevice } from '../../store/app.svelte';
   import { getCorrupt, listBackups, type Backup } from '../../store/persist';
   import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { exportFileName, parseDataset, serializeDataset } from '../../domain/file';
@@ -23,7 +23,7 @@
 
   let view = $state<'main' | 'how'>('main');
   let editingScale = $state(false);
-  let confirm = $state<'clearScale' | 'open' | null>(null);
+  let confirm = $state<'clearScale' | 'open' | 'wipe' | 'wipeType' | null>(null);
   let restoring = $state<Backup | null>(null);
   let pendingText = '';
   let error = $state('');
@@ -78,6 +78,11 @@
     if (app.ds.publications.length > 0) { pendingText = text; confirm = 'open'; } else await replaceWith(() => openPubcountText(text));
   }
   function confirmOpen() { confirm = null; return replaceWith(() => openPubcountText(pendingText)); }
+  async function confirmWipe() {
+    confirm = null;
+    error = '';
+    try { await wipeDevice(); } catch { error = t('set.wipeErr'); }
+  }
   async function restore() {
     const b = restoring;
     restoring = null;
@@ -172,6 +177,8 @@
           {/each}
         </ul>
       {/if}
+      <h3>{t('set.wipe')}</h3>
+      <button type="button" onclick={() => (confirm = 'wipe')}>{t('set.wipe')}</button>
     </section>
 
     <div class="row">
@@ -185,6 +192,10 @@
   confirmLabel={t('set.scaleClearConfirm')} danger onconfirm={clearScale} oncancel={() => (confirm = null)} />
 <ConfirmDialog open={confirm === 'open'} title={t('set.openTitle')} message={t('set.openMessage')}
   confirmLabel={t('set.openConfirm')} danger onconfirm={confirmOpen} oncancel={() => (confirm = null)} />
+<ConfirmDialog open={confirm === 'wipe'} title={t('set.wipeTitle')} message={t('set.wipeMessage')}
+  confirmLabel={t('set.wipeNext')} danger onconfirm={() => (confirm = 'wipeType')} oncancel={() => (confirm = null)} />
+<ConfirmDialog open={confirm === 'wipeType'} title={t('set.wipeTitle2')} message={t('set.wipeMessage2')}
+  confirmLabel={t('set.wipeConfirm')} requireText={t('set.wipeWord')} danger onconfirm={confirmWipe} oncancel={() => (confirm = null)} />
 <ConfirmDialog open={restoring !== null} title={t('set.restoreTitle')} message={t('set.restoreMessage')}
   confirmLabel={t('set.restoreConfirm')} danger onconfirm={restore} oncancel={() => (restoring = null)} />
 

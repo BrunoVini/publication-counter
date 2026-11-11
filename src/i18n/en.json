@@ -300,5 +300,19 @@
   "drive.conflict.pubs": "Publications",
   "drive.conflict.useDevice": "Use this device's version",
   "drive.conflict.useDrive": "Use the Drive version",
-  "drive.conflict.kept": "The other version is kept as a local backup."
+  "drive.conflict.kept": "The other version is kept as a local backup.",
+  "dialog.typeToConfirm": "Type {word} to confirm",
+  "set.wipe": "Delete data on this device",
+  "set.wipeTitle": "Delete all data on this device?",
+  "set.wipeMessage": "This removes all publications, counts, settings and local backups from this device. Your Google Drive backup, if you have one, is not touched. Before continuing, consider \"Hand over\" (export a .pubcount file) or \"Back up now\".",
+  "set.wipeNext": "Continue",
+  "set.wipeTitle2": "Are you sure?",
+  "set.wipeMessage2": "This cannot be undone. The app will restart empty.",
+  "set.wipeConfirm": "Delete everything",
+  "set.wipeWord": "DELETE",
+  "set.wipeErr": "Could not delete the data on this device.",
+  "drive.delete": "Delete Drive backup and disconnect",
+  "drive.deleteTitle": "Delete the Drive backup?",
+  "drive.deleteMessage": "This permanently deletes the \"Publication Counter\" folder and the backup file the app created in your Google Drive, and revokes the app's access to your Google account. The data on this device is kept.",
+  "drive.deleteExpiredHint": "Reconnect first to delete the Drive backup."
 }

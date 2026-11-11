@@ -3,8 +3,8 @@ import { applyTheme } from '../ui/theme';
 import { validateDataset } from '../domain/file';
 import { emptyDataset } from '../domain/dataset';
 import type { Dataset } from '../domain/types';
-import { scheduleSync } from './sync.svelte';
-import { loadDataset, pushBackup, requestPersistentStorage, saveDataset } from './persist';
+import { disconnect, scheduleSync } from './sync.svelte';
+import { clearAll, loadDataset, pushBackup, requestPersistentStorage, saveDataset } from './persist';
 
 export const app = $state({
   ds: emptyDataset('pending'),
@@ -29,6 +29,8 @@ let chain: Promise<unknown> = Promise.resolve();
 let pending = 0;
 // NOTE: set when the stored value could not be read; saving then would overwrite it.
 let readFailed = false;
+// NOTE: set once the device is being wiped, so no later save can write the old data back.
+let wiping = false;
 
 const enqueue = <T>(job: () => Promise<T>): Promise<T> => {
   const run = chain.then(job);
@@ -37,7 +39,7 @@ const enqueue = <T>(job: () => Promise<T>): Promise<T> => {
 };
 
 function save(): void {
-  if (readFailed) return;
+  if (readFailed || wiping) return;
   pending++;
   app.saveState = 'saving';
   // $state.snapshot unwraps the proxy; taken now so each write holds its own state.
@@ -59,6 +61,7 @@ export const flushSaves = async (): Promise<void> => { await chain; };
 export async function init(): Promise<void> {
   let ds: Dataset | null = null;
   readFailed = false;
+  wiping = false;
   app.lastSavedAt = null;
   try { ds = await loadDataset(); } catch { readFailed = true; app.saveState = 'unavailable'; }
   app.ds = ds ?? emptyDataset(crypto.randomUUID());
@@ -93,4 +96,15 @@ export async function replaceDataset(next: Dataset, reason: string): Promise<voi
   applyPreferences(next);
   save();
   await flushSaves();
+}
+
+/** Erases everything on this device (the Drive copy is untouched), then calls `reload`. Throws if the store cannot be cleared. */
+export async function wipeDevice(reload: () => void = () => location.reload()): Promise<void> {
+  wiping = true;
+  try {
+    await flushSaves();
+    await disconnect();
+    await clearAll();
+  } catch (e) { wiping = false; throw e; }
+  reload();
 }

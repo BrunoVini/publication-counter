@@ -224,20 +224,48 @@ export async function reconnect(): Promise<void> {
   await syncNow();
 }
 
+async function resetLink(): Promise<void> {
+  st = { connected: false };
+  drive.status = 'off';
+  drive.conflict = null;
+  drive.error = null;
+  drive.lastSyncAt = null;
+  await saveDriveState(st);
+}
+
+async function revokeBestEffort(old: { token: string } | null): Promise<void> {
+  if (old) { try { await (await loadGis()).revoke(old.token); } catch { /* best effort */ } }
+}
+
 export async function disconnect(): Promise<void> {
   clearTimeout(timer);
   const old = tok;
   tok = null;
   // NOTE: queued behind any in-flight sync so its late write cannot undo the disconnect.
-  await enqueue(async () => {
-    st = { connected: false };
-    drive.status = 'off';
-    drive.conflict = null;
-    drive.error = null;
-    drive.lastSyncAt = null;
-    await saveDriveState(st);
+  await enqueue(resetLink);
+  await revokeBestEffort(old);
+}
+
+const gone = (p: Promise<void>) => p.catch((e) => { if ((e as { kind?: string })?.kind !== 'notFound') throw e; });
+
+/** Deletes the backup file and the app folder from Drive, then disconnects. Keeps the link on failure so it can be retried. */
+export function deleteDriveBackup(): Promise<void> {
+  clearTimeout(timer);
+  return enqueue(async () => {
+    if (!st.connected) return;
+    if (!valid()) { drive.status = 'expired'; return; }
+    const old = tok!;
+    drive.status = 'syncing';
+    try {
+      const api = await loadApi();
+      if (st.fileId) await gone(api.deleteFile(old.token, st.fileId));
+      const folder = await api.findFolder(old.token);
+      if (folder) await gone(api.deleteFile(old.token, folder));
+    } catch (e) { fail(e); return; }
+    tok = null;
+    await resetLink();
+    await revokeBestEffort(old);
   });
-  if (old) { try { await (await loadGis()).revoke(old.token); } catch { /* best effort */ } }
 }
 
 export function scheduleSync(): void {

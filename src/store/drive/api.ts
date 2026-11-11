@@ -50,10 +50,19 @@ const list = async (token: string, q: string, fields: string, order = '') => {
   return ((await res.json()).files ?? []) as DriveMeta[];
 };
 
-export async function ensureFolder(token: string): Promise<string> {
+/** The app folder id, or null; never creates it. */
+export async function findFolder(token: string): Promise<string | null> {
   const q = `name='${FOLDER_NAME}' and mimeType='${FOLDER_MIME}' and trashed=false`;
-  const [found] = await list(token, q, 'id');
-  if (found) return found.id;
+  return (await list(token, q, 'id'))[0]?.id ?? null;
+}
+
+export async function deleteFile(token: string, id: string): Promise<void> {
+  await call(token, `${FILES}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export async function ensureFolder(token: string): Promise<string> {
+  const found = await findFolder(token);
+  if (found) return found;
   const res = await call(token, `${FILES}?fields=id`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
