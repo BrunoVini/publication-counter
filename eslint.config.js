@@ -103,19 +103,4 @@ export default tseslint.config(
       'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
     },
   },
-  // NOTE: temporary until these files are split
-  {
-    files: [
-      'src/domain/dataset.ts',
-      'src/store/sync.svelte.ts',
-      'src/ui/count/CountScreen.svelte',
-      'src/ui/count/ItemPanel.svelte',
-      'src/ui/publications/PublicationsScreen.svelte',
-      'src/ui/settings/SettingsScreen.svelte',
-      'tests/domain/dataset.test.ts',
-      'tests/store/sync.test.ts',
-      'tests/ui/item-panel.test.ts',
-    ],
-    rules: { 'max-lines': 'off' },
-  },
 );
