@@ -15,6 +15,8 @@ export const app = $state({
   pubDraftName: null as string | null,
   // NOTE: the count list's "only not counted" filter; the Summary sets it to jump to the uncounted items.
   onlyNotCounted: false,
+  // NOTE: text of a file received by launch or share, waiting for the user to confirm replacing data.
+  incomingFile: null as string | null,
 });
 
 let chain: Promise<unknown> = Promise.resolve();

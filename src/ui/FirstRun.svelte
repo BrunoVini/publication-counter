@@ -3,6 +3,7 @@
   import { i18n, t } from '../i18n/index.svelte';
   import type { Lang, WeightUnit } from '../domain/types';
   import { openPubcountText, pickTextFile } from './shared/fileio';
+  import { isIosBrowser } from './shared/platform';
 
   const langs: { code: Lang; name: string }[] = [
     { code: 'pt', name: 'Português' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
@@ -13,11 +14,7 @@
   const defaultUnit = (): WeightUnit =>
     i18n.lang === 'en' && /-US$/i.test(navigator.language ?? '') ? 'lb' : 'kg';
 
-  const ua = navigator.userAgent;
-  const isIos = (/iPad|iPhone|iPod/.test(ua)
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    && (navigator as any).standalone !== true;
+  const isIos = isIosBrowser();
 
   let step = $state<1 | 2 | 3>(1);
   let unit = $state<WeightUnit>(defaultUnit());

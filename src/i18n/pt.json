@@ -259,5 +259,8 @@
   "how.margin": "Margem (±)",
   "how.marginText": "A margem só vale para a parte pesada. Lacrados, contagens à mão e a amostra são exatos. Ela combina a precisão da balança com um mínimo de 1% para a variação natural entre exemplares (papel, umidade, tiragem). Vale a maior das duas, arredondada para cima.",
   "how.sample": "Regra da amostra",
-  "how.sampleText": "Use pelo menos 10 unidades e um peso de amostra de pelo menos 200 vezes a precisão da balança. Se a amostra for pequena, o app sugere quantas unidades usar, mas não bloqueia. Folhetos muito leves só pedem mais unidades."
+  "how.sampleText": "Use pelo menos 10 unidades e um peso de amostra de pelo menos 200 vezes a precisão da balança. Se a amostra for pequena, o app sugere quantas unidades usar, mas não bloqueia. Folhetos muito leves só pedem mais unidades.",
+  "pwa.update": "Nova versão disponível",
+  "pwa.reload": "Recarregar",
+  "ios.banner": "Adicione à Tela de Início para manter seus dados."
 }

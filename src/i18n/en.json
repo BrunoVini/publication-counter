@@ -259,5 +259,8 @@
   "how.margin": "Margin (±)",
   "how.marginText": "The margin applies only to the weighed part. Sealed packs, hand counts and the sample are exact. It combines the scale resolution with a minimum of 1% for natural variation between copies (paper, humidity, print run), and the larger of the two is shown, rounded up.",
   "how.sample": "Sample rule",
-  "how.sampleText": "Use at least 10 units, and a sample weight of at least 200 times the scale resolution. If the sample falls short, the app suggests how many units to use but does not block you. Very light leaflets only need more units."
+  "how.sampleText": "Use at least 10 units, and a sample weight of at least 200 times the scale resolution. If the sample falls short, the app suggests how many units to use but does not block you. Very light leaflets only need more units.",
+  "pwa.update": "New version available",
+  "pwa.reload": "Reload",
+  "ios.banner": "Add to Home Screen to keep your data."
 }

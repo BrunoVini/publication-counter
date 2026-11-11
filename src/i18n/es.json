@@ -259,5 +259,8 @@
   "how.margin": "Margen (±)",
   "how.marginText": "El margen solo vale para la parte pesada. Los sellados, los conteos a mano y la muestra son exactos. Combina la precisión de la báscula con un mínimo del 1% por la variación natural entre ejemplares (papel, humedad, tirada). Se muestra el mayor de los dos, redondeado hacia arriba.",
   "how.sample": "Regla de la muestra",
-  "how.sampleText": "Usa al menos 10 unidades y un peso de muestra de al menos 200 veces la precisión de la báscula. Si la muestra no alcanza, la app sugiere cuántas unidades usar, pero no bloquea. Los folletos muy ligeros solo piden más unidades."
+  "how.sampleText": "Usa al menos 10 unidades y un peso de muestra de al menos 200 veces la precisión de la báscula. Si la muestra no alcanza, la app sugiere cuántas unidades usar, pero no bloquea. Los folletos muy ligeros solo piden más unidades.",
+  "pwa.update": "Nueva versión disponible",
+  "pwa.reload": "Recargar",
+  "ios.banner": "Añade a la pantalla de inicio para conservar tus datos."
 }
