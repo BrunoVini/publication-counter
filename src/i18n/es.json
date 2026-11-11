@@ -330,10 +330,10 @@
   "set.pubLangs": "Idiomas de las publicaciones",
   "set.pubLanguage": "Idioma principal",
   "set.pubLanguages": "Otros idiomas",
-  "pubs.delete": "Eliminar",
-  "pubs.delete.title": "¿Eliminar esta publicación?",
-  "pubs.delete.message": "Los conteos anteriores conservan el nombre y las cantidades.",
+  "pubs.delete": "Borrar",
+  "pubs.delete.title": "¿Borrar \"{name}\"?",
+  "pubs.delete.message": "Sale de la lista y no aparecerá en los próximos conteos. Los conteos anteriores conservan el nombre y las cantidades. No se puede deshacer. Si solo quieres ocultarla por un tiempo, usa Archivar.",
   "pubs.delete.openWarn": "Los registros de este conteo para ella se perderán.",
-  "pubs.delete.confirm": "Eliminar",
+  "pubs.delete.confirm": "Borrar",
   "pubs.sampleOpenNote": "El conteo abierto conserva su propio peso unitario, porque ya tiene registros. Cámbialo allí si hace falta."
 }

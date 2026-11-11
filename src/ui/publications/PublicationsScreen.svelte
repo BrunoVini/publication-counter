@@ -271,7 +271,7 @@
   {/if}
 {/if}
 
-<ConfirmDialog open={confirmDelete} title={t('pubs.delete.title')} message={deleteMessage}
+<ConfirmDialog open={confirmDelete} title={t('pubs.delete.title', { name: form?.name ?? '' })} message={deleteMessage}
   confirmLabel={t('pubs.delete.confirm')} danger onconfirm={remove} oncancel={() => (confirmDelete = false)} />
 <PasteListDialog open={app.pasteOpen} onclose={() => (app.pasteOpen = false)} />
 

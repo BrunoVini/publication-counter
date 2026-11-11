@@ -331,8 +331,8 @@
   "set.pubLanguage": "Main language",
   "set.pubLanguages": "Other languages",
   "pubs.delete": "Delete",
-  "pubs.delete.title": "Delete this publication?",
-  "pubs.delete.message": "Past counts keep its name and quantities.",
+  "pubs.delete.title": "Delete \"{name}\"?",
+  "pubs.delete.message": "It leaves the list and won't appear in future counts. Past counts keep its name and quantities. This can't be undone. To just hide it for a while, use Archive.",
   "pubs.delete.openWarn": "This count's entries for it will be lost.",
   "pubs.delete.confirm": "Delete",
   "pubs.sampleOpenNote": "The open count keeps its own unit weight, because it already has entries. Change it there if needed."
