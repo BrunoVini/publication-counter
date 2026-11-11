@@ -22,14 +22,24 @@
   let step = $state<1 | 2 | 3>(1);
   let unit = $state<WeightUnit>(defaultUnit());
   let error = $state('');
+  // NOTE: the language default only applies while the user has not picked a unit.
+  let unitTouched = false;
+  let heading = $state<HTMLHeadingElement>();
+  let firstRender = true;
+  $effect(() => {
+    void step;
+    if (firstRender) { firstRender = false; return; }
+    heading?.focus();
+  });
 
   function chooseLang(l: Lang) {
     i18n.lang = l;
-    unit = defaultUnit();
+    if (!unitTouched) unit = defaultUnit();
     act((ds) => { ds.settings.language = l; ds.settings.unit = unit; });
   }
   function chooseUnit(u: WeightUnit) {
     unit = u;
+    unitTouched = true;
     act((ds) => { ds.settings.unit = u; });
   }
   function next() {
@@ -78,12 +88,12 @@
     </fieldset>
     <button type="button" class="primary" onclick={next}>{t('first.next')}</button>
   {:else if step === 2}
-    <h2>{t('first.ios.title')}</h2>
+    <h2 tabindex="-1" bind:this={heading}>{t('first.ios.title')}</h2>
     <p>{t('first.ios.steps')}</p>
     <p>{t('first.ios.why')}</p>
     <button type="button" class="primary" onclick={() => (step = 3)}>{t('first.ios.continue')}</button>
   {:else}
-    <h2>{t('first.start.title')}</h2>
+    <h2 tabindex="-1" bind:this={heading}>{t('first.start.title')}</h2>
     <div class="col">
       <button type="button" class="primary" onclick={paste}>{t('first.paste')}</button>
       <button type="button" onclick={openFile}>{t('first.open')}</button>

@@ -12,33 +12,33 @@
 {#if !app.ds.settings.firstRunDone}
   <FirstRun />
 {:else}
-<div class="shell">
-  <header class="no-print">
-    <strong>{t('app.name')}</strong>
-    <!-- NOTE: while the alert banner is shown it is the only live announcement. -->
-    <span class="save" role={app.saveState === 'unavailable' ? undefined : 'status'}>
-      <span aria-hidden="true">{app.saveState === 'saved' ? '✓' : app.saveState === 'saving' ? '…' : '!'}</span>
-      {t(`save.${app.saveState}`)}
-    </span>
-  </header>
+  <div class="shell">
+    <header class="no-print">
+      <strong>{t('app.name')}</strong>
+      <!-- NOTE: while the alert banner is shown it is the only live announcement. -->
+      <span class="save" role={app.saveState === 'unavailable' ? undefined : 'status'}>
+        <span aria-hidden="true">{app.saveState === 'saved' ? '✓' : app.saveState === 'saving' ? '…' : '!'}</span>
+        {t(`save.${app.saveState}`)}
+      </span>
+    </header>
 
-  {#if app.saveState === 'unavailable'}
-    <div class="banner" role="alert">{t('save.unavailableBanner')}</div>
-  {/if}
+    {#if app.saveState === 'unavailable'}
+      <div class="banner" role="alert">{t('save.unavailableBanner')}</div>
+    {/if}
 
-  <nav aria-label={t('nav.label')}>
-    {#each tabs as tab (tab)}
-      <button type="button" aria-current={app.tab === tab ? 'page' : undefined} onclick={() => (app.tab = tab)}>
-        <span aria-hidden="true">{icons[tab]}</span>
-        <span>{t(`nav.${tab}`)}</span>
-      </button>
-    {/each}
-  </nav>
+    <nav aria-label={t('nav.label')}>
+      {#each tabs as tab (tab)}
+        <button type="button" aria-current={app.tab === tab ? 'page' : undefined} onclick={() => (app.tab = tab)}>
+          <span aria-hidden="true">{icons[tab]}</span>
+          <span>{t(`nav.${tab}`)}</span>
+        </button>
+      {/each}
+    </nav>
 
-  <main>
-    <h1>{t(`nav.${app.tab}`)}</h1>
-  </main>
-</div>
+    <main>
+      <h1>{t(`nav.${app.tab}`)}</h1>
+    </main>
+  </div>
 {/if}
 <Toast />
 

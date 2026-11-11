@@ -8,12 +8,16 @@ import { i18n } from '../../src/i18n/index.svelte';
 import { serializeDataset } from '../../src/domain/file';
 import { createStore } from 'idb-keyval';
 import { setStore } from '../../src/store/persist';
-import { pickTextFile } from '../../src/ui/shared/fileio';
+import { openPubcountText, pickTextFile } from '../../src/ui/shared/fileio';
 
-vi.mock('../../src/ui/shared/fileio', async (orig) => ({
-  ...(await orig<typeof import('../../src/ui/shared/fileio')>()),
+vi.mock('../../src/ui/shared/fileio', async (orig) => {
+  const real = await orig<typeof import('../../src/ui/shared/fileio')>();
+  return {
+  ...real,
   pickTextFile: vi.fn(),
-}));
+  openPubcountText: vi.fn(real.openPubcountText),
+  };
+});
 
 let n = 0;
 beforeEach(() => {
@@ -70,5 +74,40 @@ describe('first run', () => {
     await waitFor(() => expect(app.ds.datasetId).toBe('received'));
     await waitFor(() => expect(app.ds.settings.firstRunDone).toBe(true));
     expect(app.ds.settings.unit).toBe('lb');
+  });
+
+  test('moving to the next step focuses its heading', async () => {
+    render(App);
+    await fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { level: 2 })));
+  });
+
+  test('choosing a language keeps a unit the user already picked', async () => {
+    render(App);
+    await fireEvent.click(screen.getByRole('radio', { name: 'oz' }));
+    await fireEvent.click(screen.getByRole('radio', { name: 'English' }));
+    expect(app.ds.settings.unit).toBe('oz');
+    expect((screen.getByRole('radio', { name: 'oz' }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  test('a file from a newer version shows the error and keeps data', async () => {
+    vi.mocked(pickTextFile).mockResolvedValue(JSON.stringify({ formatVersion: 2 }));
+    render(App);
+    await fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Abrir arquivo recebido' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/versão mais nova/));
+    expect(app.ds.datasetId).toBe('first');
+    expect(app.ds.settings.firstRunDone).toBe(false);
+  });
+
+  test('a failed backup shows the message and keeps data', async () => {
+    vi.mocked(pickTextFile).mockResolvedValue('{}');
+    vi.mocked(openPubcountText).mockRejectedValueOnce('backupFailed');
+    render(App);
+    await fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Abrir arquivo recebido' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/backup/));
+    expect(app.ds.datasetId).toBe('first');
+    expect(app.ds.settings.firstRunDone).toBe(false);
   });
 });
