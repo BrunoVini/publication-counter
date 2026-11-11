@@ -1,13 +1,19 @@
 import * as v from 'valibot';
+import { validateScale } from './calc';
 import type { Dataset } from './types';
 
 export const CURRENT_FORMAT = 1;
 
 const text = v.pipe(v.string(), v.maxLength(200), v.regex(/^[^\u0000-\u001F]*$/));
 const id = v.pipe(text, v.minLength(1));
-const date = v.pipe(v.string(), v.maxLength(64));
-const posNum = v.pipe(v.number(), v.finite(), v.gtValue(0));
-const posInt = v.pipe(v.number(), v.integer(), v.minValue(1));
+const date = v.pipe(
+  v.string(), v.maxLength(64),
+  v.regex(/^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:\d{2})?)?$/),
+  v.check((s) => !Number.isNaN(Date.parse(s))),
+);
+// NOTE: upper bounds keep every calc result finite (10 tonnes, one million units).
+const posNum = v.pipe(v.number(), v.finite(), v.gtValue(0), v.maxValue(1e7));
+const posInt = v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(1e6));
 
 const sample = v.strictObject({ units: posInt, weightG: posNum });
 const entry = v.variant('kind', [
@@ -47,16 +53,24 @@ const schema = v.strictObject({
 const migrate = (raw: unknown): unknown => raw;
 
 function structureOk(ds: Dataset): boolean {
+  const uniq = (xs: string[]) => new Set(xs).size === xs.length;
   const ids = new Set(ds.publications.map((p) => p.id));
   return ids.size === ds.publications.length
+    && (ds.settings.scale === null || validateScale(ds.settings.scale) === 'ok')
+    && uniq(ds.counts.map((c) => c.id))
     && ds.counts.filter((c) => !c.finishedAt).length <= 1
-    && ds.counts.every((c) => c.items.every((i) => ids.has(i.publicationId)));
+    && ds.counts.every((c) => uniq(c.items.map((i) => i.publicationId))
+      && c.items.every((i) => ids.has(i.publicationId)
+        && uniq(i.entries.map((e) => e.id))
+        && !(i.zero && i.entries.length > 0)
+        && i.entries.filter((e) => e.kind === 'sample').length <= 1));
 }
 
 export const serializeDataset = (ds: Dataset): string => JSON.stringify(ds, null, 2);
 
 export function parseDataset(textIn: string):
   { ok: true; dataset: Dataset } | { ok: false; error: 'notJson' | 'invalid' | 'tooNew' } {
+  if (textIn.length > 5_000_000) return { ok: false, error: 'invalid' };
   let raw: unknown;
   try { raw = JSON.parse(textIn); } catch { return { ok: false, error: 'notJson' }; }
   const ver = (raw as { formatVersion?: unknown } | null)?.formatVersion;
@@ -67,7 +81,7 @@ export function parseDataset(textIn: string):
 }
 
 export function exportFileName(ds: Dataset, today: string): string {
-  const slug = (ds.settings.locationName ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const slug = (ds.settings.locationName ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   return `${slug || 'pubcount'}-${today}.pubcount`;
 }
