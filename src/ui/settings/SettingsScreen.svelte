@@ -21,7 +21,7 @@
   ];
   const units: WeightUnit[] = ['g', 'kg', 'lb', 'oz'];
 
-  let view = $state<'main' | 'how' | 'privacy'>('main');
+  let view = $state<'main' | 'how'>('main');
   let editingScale = $state(false);
   let confirm = $state<'clearScale' | 'open' | null>(null);
   let restoring = $state<Backup | null>(null);
@@ -96,12 +96,6 @@
 <div class="col">
   {#if view === 'how'}
     <HowItWorks onback={() => (view = 'main')} />
-  {:else if view === 'privacy'}
-    <section class="stack">
-      <button type="button" onclick={() => (view = 'main')}>{t('set.back')}</button>
-      <h2>{t('set.privacyTitle')}</h2>
-      <p>{t('set.privacyText')}</p>
-    </section>
   {:else}
     <section class="stack">
       <h2>{t('set.appearance')}</h2>
@@ -182,7 +176,7 @@
 
     <div class="row">
       <button type="button" onclick={() => (view = 'how')}>{t('set.howLink')}</button>
-      <button type="button" onclick={() => (view = 'privacy')}>{t('set.privacyLink')}</button>
+      <a class="btn" href="/privacy.html" target="_blank" rel="noopener">{t('set.privacyLink')}</a>
     </div>
   {/if}
 </div>
@@ -205,6 +199,7 @@
   input[type='radio'] { width: 24px; height: 24px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; }
   button { min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; }
+  .btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; text-decoration: none; }
   button:disabled { color: var(--muted); }
   button:first-child:not(.row button) { justify-self: start; }
   .backups { list-style: none; padding: 0; display: grid; gap: 8px; }

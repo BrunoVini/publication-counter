@@ -6,7 +6,7 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: { url: string; r
 
 precacheAndRoute(self.__WB_MANIFEST);
 // NOTE: every navigation (including /?shared=1) is served from the precached shell, so offline reloads work.
-registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')));
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { denylist: [/^\/privacy\.html$/] }));
 
 // Update prompt: the page asks the waiting worker to take over.
 self.addEventListener('message', (e) => { if (e.data?.type === 'SKIP_WAITING') void self.skipWaiting(); });

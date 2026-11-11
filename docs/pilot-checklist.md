@@ -23,3 +23,14 @@ Manual PWA checks:
 - [ ] An invalid or too-new file shows an error and changes nothing.
 - [ ] The browser console shows no CSP violations on every screen.
 
+
+## Google Drive setup (author only)
+
+- [ ] Deploy to Cloudflare Pages, note the `<project>.pages.dev` URL and fill in the README "Production URL" line.
+- [ ] Create a Google Cloud project and enable the Google Drive API.
+- [ ] Configure the OAuth consent screen: External, app name without any JW name, privacy policy URL `https://<pages.dev>/privacy.html`, scope `drive.file` only, and add yourself as a test user.
+- [ ] Create an OAuth Client ID of type Web application, with authorised JavaScript origins `https://<pages.dev>` and `http://localhost:5173`.
+- [ ] Set `VITE_GOOGLE_CLIENT_ID` in the Cloudflare Pages environment variables and in a local `.env.local` (gitignored), then redeploy.
+- [ ] Replace `CONTACT: TODO (author)` in `public/privacy.html`.
+- [ ] Test: connect, back up now, conflict (edit on two devices), expiry (wait about 1 h, then Reconnect), and disconnect.
+- [ ] Check whether brand verification is required before publishing (`drive.file` is non-sensitive, so unverified should be OK), then switch the publishing status to In production.

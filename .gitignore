@@ -3,3 +3,4 @@ dist/
 .superpowers/
 local_docs/
 *.xlsx
+.env*.local

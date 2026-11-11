@@ -1,0 +1,6 @@
+:root { color-scheme: light dark; }
+body { font: 16px/1.5 system-ui, sans-serif; max-width: 42rem; margin: 0 auto; padding: 16px; }
+nav { display: flex; gap: 16px; margin-bottom: 16px; }
+nav a { display: inline-flex; align-items: center; min-height: 44px; }
+h1, h2 { line-height: 1.2; }
+a { color: LinkText; }
