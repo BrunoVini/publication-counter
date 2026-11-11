@@ -95,4 +95,25 @@ describe('publications screen', () => {
     await fireEvent.click(screen.getAllByRole('button', { name: 'Restore' })[0]);
     expect(app.ds.publications[0].archived).toBe(false);
   });
+
+  test('editing without touching the sample keeps the stored grams exactly', async () => {
+    app.ds.settings.unit = 'lb';
+    app.ds.publications[0].sample = { units: 7, weightG: 123.456789 };
+    render(PublicationsScreen);
+    await fireEvent.click(screen.getByRole('button', { name: /Awake!/ }));
+    await type(/^Name/, 'Awake! 2');
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(app.ds.publications[0].name).toBe('Awake! 2');
+    expect(app.ds.publications[0].sample).toEqual({ units: 7, weightG: 123.456789 });
+  });
+
+  test('editing the sample weight re-converts it', async () => {
+    app.ds.settings.unit = 'kg';
+    app.ds.publications[0].sample = { units: 7, weightG: 123.456789 };
+    render(PublicationsScreen);
+    await fireEvent.click(screen.getByRole('button', { name: /Awake!/ }));
+    await type(/^Sample weight/, '0,5');
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(app.ds.publications[0].sample).toEqual({ units: 7, weightG: 500 });
+  });
 });

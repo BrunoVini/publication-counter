@@ -25,10 +25,10 @@
 
   interface Form {
     id: string | null; name: string; language: string; variant: string;
-    units: string; weight: string; copyFrom: string; packSize: string; mode: 'weigh' | 'hand';
+    units: string; weight: string; origUnits: string; origWeight: string; copyFrom: string; packSize: string; mode: 'weigh' | 'hand';
   }
   const blank = (name = ''): Form =>
-    ({ id: null, name, language: '', variant: '', units: '', weight: '', copyFrom: '', packSize: '', mode: 'weigh' });
+    ({ id: null, name, language: '', variant: '', units: '', weight: '', origUnits: '', origWeight: '', copyFrom: '', packSize: '', mode: 'weigh' });
 
   // The draft from the count screen opens the form prefilled; it is consumed right away.
   let form = $state<Form | null>(app.pubDraftName !== null ? blank(app.pubDraftName) : null);
@@ -51,9 +51,10 @@
 
   function openForm(p?: Publication) {
     dupError = ''; formError = '';
+    const units = p?.sample ? String(p.sample.units) : '', weight = p?.sample ? plain(p.sample.weightG) : '';
     form = p ? {
       id: p.id, name: p.name, language: p.language, variant: p.variant,
-      units: p.sample ? String(p.sample.units) : '', weight: p.sample ? plain(p.sample.weightG) : '',
+      units, weight, origUnits: units, origWeight: weight,
       copyFrom: '', packSize: p.packSize ? String(p.packSize) : '', mode: p.defaultMode,
     } : blank();
   }
@@ -71,7 +72,11 @@
     const f = form;
     const hasUnits = f.units.trim() !== '', hasWeight = f.weight.trim() !== '';
     let sample: { units: number; weightG: number } | undefined;
-    if (!f.copyFrom && (hasUnits || hasWeight)) {
+    // NOTE: the prefilled weight is rounded for display, so an untouched sample keeps its stored grams.
+    const stored = f.id ? app.ds.publications.find((p) => p.id === f.id)?.sample : undefined;
+    if (!f.copyFrom && stored && f.units === f.origUnits && f.weight === f.origWeight) {
+      sample = { ...stored };
+    } else if (!f.copyFrom && (hasUnits || hasWeight)) {
       const units = parseWhole(f.units), w = parseDecimal(f.weight);
       if (units === null || w === null || w <= 0) { formError = t('pubs.err.sample'); return; }
       sample = { units, weightG: toGrams(w, unit) };
