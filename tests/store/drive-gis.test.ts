@@ -113,9 +113,44 @@ describe('drive gis', () => {
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
     const p2 = requestToken(true);
     await expect(p1).rejects.toBeInstanceOf(AuthCancelled);
+    await expect(p1).rejects.toThrow('superseded');
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
     cfg.callback({ access_token: 'x', expires_in: 3600 });
     expect((await p2).token).toBe('x');
+  });
+
+  it('callback without token or error rejects noToken', async () => {
+    const { requestToken, AuthCancelled } = await load();
+    const p = requestToken(true);
+    await vi.waitFor(() => expect(request).toHaveBeenCalled());
+    cfg.callback({});
+    await expect(p).rejects.toBeInstanceOf(AuthCancelled);
+    await expect(p).rejects.toThrow('noToken');
+  });
+
+  it('requestAccessToken throwing rejects and a later request still works', async () => {
+    const { requestToken } = await load();
+    request.mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    await expect(requestToken(true)).rejects.toThrow('boom');
+    const p = requestToken(true);
+    await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    cfg.callback({ access_token: 'ok', expires_in: 3600 });
+    expect((await p).token).toBe('ok');
+  });
+
+  it('preloadGis is a no-op without a client id', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+    const { preloadGis } = await load();
+    await preloadGis();
+    expect(appended).toBe(0);
+  });
+
+  it('preloadGis appends the script when configured', async () => {
+    const { preloadGis } = await load();
+    await preloadGis();
+    expect(appended).toBe(1);
   });
 
   it('script load failure rejects and allows retry', async () => {

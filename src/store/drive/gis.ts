@@ -40,6 +40,21 @@ function settle(fn: (p: NonNullable<typeof pending>) => void) {
   if (p) fn(p);
 }
 
+/**
+ * Fire-and-forget script load. Call it early (e.g. when the settings cloud
+ * section mounts) so a later requestToken does not await the network.
+ */
+export function preloadGis(): Promise<void> {
+  if (!driveConfigured()) return Promise.resolve();
+  // NOTE: errors are swallowed; a later requestToken retries the load.
+  return loadScript().catch(() => {});
+}
+
+/**
+ * Must be called directly from a click handler. Call preloadGis() earlier
+ * (e.g. when the settings cloud section mounts) so the popup opens inside
+ * the user gesture.
+ */
 export async function requestToken(interactive: boolean): Promise<Token> {
   if (!driveConfigured()) throw new Error('notConfigured');
   await loadScript();
@@ -61,7 +76,12 @@ export async function requestToken(interactive: boolean): Promise<Token> {
   });
   return new Promise<Token>((resolve, reject) => {
     pending = { resolve, reject };
-    client!.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+    try {
+      client!.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+    } catch (e) {
+      pending = null;
+      reject(e);
+    }
   });
 }
 
