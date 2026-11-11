@@ -250,8 +250,6 @@
   "set.howLink": "Como funciona",
   "set.privacyLink": "Privacidade",
   "set.back": "Voltar aos ajustes",
-  "set.privacyTitle": "Privacidade",
-  "set.privacyText": "O PubCount não tem servidor. Seus dados ficam neste aparelho e nada é enviado para lugar nenhum. A cópia no Google Drive virá depois e só mexerá no arquivo que o próprio app criar.",
   "how.title": "Como funciona",
   "how.step1": "1. Pese uma amostra de tamanho conhecido. Divida o peso pelo número de unidades para obter o peso de uma unidade. Exemplo: {w} g / {n} = {u} g.",
   "how.step2": "2. Divida cada pesagem pelo peso de uma unidade. Exemplo: {w} g dá {q} unidades.",

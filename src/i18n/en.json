@@ -250,8 +250,6 @@
   "set.howLink": "How it works",
   "set.privacyLink": "Privacy",
   "set.back": "Back to settings",
-  "set.privacyTitle": "Privacy",
-  "set.privacyText": "PubCount has no server. Your data stays on this device and nothing is sent anywhere. Google Drive backup will come later and will only touch the file the app creates.",
   "how.title": "How it works",
   "how.step1": "1. Weigh a sample of known size. Divide its weight by its units to get the weight of one unit. Example: {w} g / {n} = {u} g.",
   "how.step2": "2. Divide each weighing by the weight of one unit. Example: {w} g gives {q} units.",
