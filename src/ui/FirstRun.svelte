@@ -8,6 +8,7 @@
   import { languagesLoaded, loadLanguages } from '../domain/languages.svelte';
   import LanguagePicker from './shared/LanguagePicker.svelte';
   import UiLangSelect from './shared/UiLangSelect.svelte';
+  import { showToast } from './shared/Toast.svelte';
   import Icon from './shared/Icon.svelte';
 
   const units: WeightUnit[] = ['g', 'kg', 'lb', 'oz'];
@@ -40,7 +41,7 @@
   });
 
   async function chooseLang(l: Lang) {
-    await setLang(l);
+    if (await setLang(l) !== l) { showToast(t('err.generic')); return; }
     if (!unitTouched) unit = defaultUnit();
     act((ds) => { ds.settings.language = l; ds.settings.unit = unit; });
   }

@@ -148,7 +148,7 @@
 <style>
   .grid { display: grid; gap: var(--sp-2); }
   .entries { list-style: none; padding: 0; display: grid; gap: var(--sp-1); }
-  .entries li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); padding: 2px var(--sp-1) 2px var(--sp-3); min-height: var(--tap-lg); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+  .entries li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); padding-block: 2px; padding-inline: var(--sp-3) var(--sp-1); min-height: var(--tap-lg); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
   .entries li.editing { padding: var(--sp-3); border: 2px solid var(--accent); }
   .entries form { flex: 1; }
   .val { font-weight: 600; flex: 1; }

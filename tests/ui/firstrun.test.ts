@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/sv
 import App from '../../src/ui/App.svelte';
 import { app, flushSaves } from '../../src/store/app.svelte';
 import { emptyDataset } from '../../src/domain/dataset';
-import { i18n } from '../../src/i18n/index.svelte';
+import { i18n, setLang } from '../../src/i18n/index.svelte';
 import { serializeDataset } from '../../src/domain/file';
 import { createStore } from 'idb-keyval';
 import { setStore } from '../../src/store/persist';
@@ -18,6 +18,11 @@ vi.mock('../../src/ui/shared/fileio', async (orig) => {
   pickTextFile: vi.fn(),
   openPubcountText: vi.fn(real.openPubcountText),
   };
+});
+
+vi.mock('../../src/i18n/index.svelte', async (orig) => {
+  const real = await orig<typeof import('../../src/i18n/index.svelte')>();
+  return { ...real, setLang: vi.fn(real.setLang) };
 });
 
 let n = 0;
@@ -96,6 +101,15 @@ describe('first run', () => {
     await waitFor(() => expect(i18n.lang).toBe('en'));
     expect(app.ds.settings.unit).toBe('oz');
     expect((screen.getByRole<HTMLInputElement>('radio', { name: 'oz' })).checked).toBe(true);
+  });
+
+  test('a language that fails to load is not persisted', async () => {
+    vi.mocked(setLang).mockImplementationOnce(async () => 'en');
+    render(App);
+    await fireEvent.change(screen.getByRole('combobox'), { target: { value: 'fr' } });
+    await waitFor(() => expect(setLang).toHaveBeenCalledWith('fr'));
+    await flushSaves();
+    expect(app.ds.settings.language).not.toBe('fr');
   });
 
   test('a file from a newer version shows the error and keeps data', async () => {

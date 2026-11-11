@@ -17,7 +17,7 @@ async function load(lang) {
   if (!Array.isArray(languages) || languages.length < 500) throw new Error(`${lang}: unexpected payload`);
   // NOTE: never trust the payload's shape; a malformed entry is skipped, and too few valid ones aborts.
   const ok = languages.filter((x) => x && typeof x.langcode === 'string' && /^[A-Za-z0-9-]{1,20}$/.test(x.langcode)
-    && typeof x.name === 'string' && typeof x.vernacularName === 'string');
+    && typeof x.name === 'string' && x.name.trim() !== '' && typeof x.vernacularName === 'string');
   if (ok.length < 500) throw new Error(`${lang}: only ${ok.length} valid entries`);
   return ok;
 }

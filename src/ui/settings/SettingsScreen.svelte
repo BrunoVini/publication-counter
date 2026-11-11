@@ -13,6 +13,7 @@
   import HowItWorks from './HowItWorks.svelte';
   import CloudSection from './CloudSection.svelte';
   import DataSection from './DataSection.svelte';
+  import { showToast } from '../shared/Toast.svelte';
   import Icon from '../shared/Icon.svelte';
 
   const themes: Theme[] = ['system', 'light', 'dark'];
@@ -29,7 +30,10 @@
   const save = (fn: (ds: Dataset) => void) => act((ds) => { ds.settings.pubLanguage ||= pubLanguageOf(ds.settings, i18n.lang); fn(ds); });
   function chooseTheme(th: Theme) { save((ds) => { ds.settings.theme = th; }); applyTheme(th); }
   // NOTE: saving happens before the switch so the persisted publication-language default still follows the previous UI language.
-  async function chooseLang(l: Lang) { await loadLocale(l); save((ds) => { ds.settings.language = l; }); await setLang(l); }
+  async function chooseLang(l: Lang) {
+    try { await loadLocale(l); } catch { showToast(t('err.generic')); return; }
+    save((ds) => { ds.settings.language = l; }); await setLang(l);
+  }
   function choosePrimary(c: string) {
     save((ds) => { ds.settings.pubLanguage = c; ds.settings.pubLanguages = (ds.settings.pubLanguages ?? []).filter((x) => x !== c); });
   }

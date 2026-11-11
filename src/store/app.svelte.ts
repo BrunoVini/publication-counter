@@ -105,8 +105,8 @@ export async function replaceDataset(next: Dataset, reason: string): Promise<voi
   const snap = $state.snapshot(app.ds);
   if (!(await enqueue(() => pushBackup(snap, reason)))) throw 'backupFailed';
   app.ds = next;
-  await applyPreferences(next);
   save();
+  await applyPreferences(next);
   await flushSaves();
 }
 

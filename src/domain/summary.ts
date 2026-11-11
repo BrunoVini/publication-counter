@@ -1,4 +1,5 @@
 import { itemTotal } from './calc';
+import { intlLocale } from '../i18n/index.svelte';
 import { languageName } from './languages.svelte';
 import { identityKey } from './text';
 import type { Dataset } from './types';
@@ -40,6 +41,7 @@ export function summaryRows(ds: Dataset, countId: string): SummaryRow[] {
       variant: pub?.variant ?? '', units, previous, bigChange, entered: item.entered, attention: bad,
     };
   });
+  const loc = intlLocale();
   return rows.sort((a, b) =>
-    a.language.localeCompare(b.language) || a.name.localeCompare(b.name) || a.variant.localeCompare(b.variant));
+    a.language.localeCompare(b.language, loc) || a.name.localeCompare(b.name, loc) || a.variant.localeCompare(b.variant, loc));
 }

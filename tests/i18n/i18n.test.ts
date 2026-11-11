@@ -105,3 +105,17 @@ describe('formatting', () => {
     expect(fmtDate('garbage')).toBe('garbage');
   });
 });
+
+describe('setLang failure', () => {
+  test('falls back to en when the locale chunk cannot load', async () => {
+    vi.resetModules();
+    vi.doMock('../../src/i18n/fr.json', () => { throw new Error('offline'); });
+    const fresh = await import('../../src/i18n/index.svelte');
+    expect(await fresh.setLang('fr')).toBe('en');
+    expect(fresh.i18n.lang).toBe('en');
+    expect(document.documentElement.lang).toBe('en');
+    expect(fresh.t('nav.settings')).toBe(en['nav.settings' as keyof typeof en]);
+    vi.doUnmock('../../src/i18n/fr.json');
+    vi.resetModules();
+  });
+});

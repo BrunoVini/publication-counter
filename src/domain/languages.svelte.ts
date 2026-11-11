@@ -37,14 +37,17 @@ async function loadNames(lang: Lang): Promise<void> {
   store.names = { ...store.names, [lang]: names };
 }
 
-/** Lazy-imports the list and the names of the current UI language (plus English, the fallback) so they stay out of the first-load chunk. */
+// NOTE: legacy free-text languages were typed while the UI was pt, en or es, so those names are always loaded for matching.
+const LEGACY: readonly Lang[] = ['pt', 'en', 'es'];
+
+/** Lazy-imports the list and the names of the current UI language (plus pt, en and es, for legacy matching) so they stay out of the first-load chunk. */
 export async function loadLanguages(): Promise<LanguageEntry[]> {
   if (!watching) {
     watching = true;
     // NOTE: follows the UI language, loading its names when it changes.
     $effect.root(() => { $effect(() => { void once(`names:${i18n.lang}`, () => loadNames(i18n.lang)); }); });
   }
-  await Promise.all([once('base', loadBase), once('names:en', () => loadNames('en')), once(`names:${i18n.lang}`, () => loadNames(i18n.lang))]);
+  await Promise.all([once('base', loadBase), ...[...new Set<Lang>([...LEGACY, i18n.lang])].map((l) => once(`names:${l}`, () => loadNames(l)))]);
   return store.base!.list;
 }
 
@@ -54,7 +57,7 @@ export const languageEntry = (code: string): LanguageEntry | undefined => store.
 /** Name in the current UI language, else English, else the vernacular name; legacy free text and unknown codes come back unchanged. */
 export function languageName(code: string): string {
   const e = languageEntry(code);
-  return e ? (store.names[i18n.lang]?.[code] ?? store.names.en?.[code] ?? (e.v || code)) : code;
+  return e ? (store.names[i18n.lang]?.[code] || store.names.en?.[code] || e.v || code) : code;
 }
 
 /** Free text from a pasted column to a code, only on an exact (normalised) match with a loaded name. */

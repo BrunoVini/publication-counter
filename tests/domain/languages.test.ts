@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { languageByName, languageName, loadLanguages, searchLanguages } from '../../src/domain/languages.svelte';
+import { canonicalKey, languageByName, languageName, loadLanguages, searchLanguages } from '../../src/domain/languages.svelte';
 import { setLang } from '../../src/i18n/index.svelte';
 import { parsePastedList } from '../../src/domain/text';
+
+const pub = { name: 'Watchtower', variant: '', language: '' };
 
 describe('languages', () => {
   it('falls back to the raw value before loading, for legacy text and for unknown codes', async () => {
@@ -27,6 +29,14 @@ describe('languages', () => {
       await setLang('en');
       await loadLanguages();
       expect(languageName('E')).toBe('English');
+      await setLang('pt');
+    });
+    it('matches legacy names typed in pt, en or es while the UI is in another language', async () => {
+      await setLang('de');
+      await loadLanguages();
+      expect(languageByName('Inglês')).toBe('E');
+      expect(languageByName('inglés')).toBe('E');
+      expect(canonicalKey({ ...pub, language: 'E' })).toBe(canonicalKey({ ...pub, language: 'Inglês' }));
       await setLang('pt');
     });
     it('has the codes first run preselects', async () => {

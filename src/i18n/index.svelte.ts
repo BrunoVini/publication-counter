@@ -31,14 +31,16 @@ export async function loadLocale(lang: Lang): Promise<void> {
   dicts[lang] = (await loaders[`./${lang}.json`]()).default;
 }
 
-/** Loads the locale, then switches to it and mirrors it on the document (lang and text direction). */
-export async function setLang(lang: Lang): Promise<void> {
-  await loadLocale(lang);
+/** Loads the locale, then switches to it and mirrors it on the document (lang and text direction). Falls back to `en` when the chunk fails to load; resolves with the language actually active. */
+export async function setLang(requested: Lang): Promise<Lang> {
+  let lang = requested;
+  try { await loadLocale(lang); } catch { lang = 'en'; }
   i18n.lang = lang;
   if (typeof document !== 'undefined') {
     document.documentElement.lang = lang;
     document.documentElement.dir = RTL.includes(lang) ? 'rtl' : 'ltr';
   }
+  return lang;
 }
 
 // NOTE: tries the exact plural form (_zero/_one/_two/_few/_many/_other), then _other, then the bare key.
