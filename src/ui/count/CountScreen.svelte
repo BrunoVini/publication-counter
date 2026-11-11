@@ -8,6 +8,7 @@
   import type { CountItem } from '../../domain/types';
   import { showToast } from '../shared/Toast.svelte';
   import ItemPanel from './ItemPanel.svelte';
+  import CounterDialog from './CounterDialog.svelte';
   import Icon from '../shared/Icon.svelte';
 
   void loadLanguages();
@@ -32,8 +33,6 @@
   let query = $state('');
   let selectedId = $state<string | null>(null);
   let asking = $state(false);
-  let name = $state('');
-  let nameError = $state(false);
   let search = $state<HTMLInputElement>();
 
   // Reuses the identity normalisation (accents, case, spacing) for matching.
@@ -65,15 +64,7 @@
   const visible = $derived(app.onlyNotCounted ? rows.filter((r) => !isDone(r.item) || r.status.kind === 'attention') : rows);
   const done = $derived(count ? count.items.filter(isDone).length : 0);
 
-  function begin() {
-    name = app.ds.settings.lastCounter ?? '';
-    nameError = false;
-    asking = true;
-  }
-  function confirmName(e: SubmitEvent) {
-    e.preventDefault();
-    const counter = name.trim();
-    if (!counter) { nameError = true; return; }
+  function start(counter: string) {
     try {
       act((ds) => startCount(ds, counter, new Date().toISOString(), () => crypto.randomUUID()));
       asking = false;
@@ -83,7 +74,6 @@
       showToast(t('count.err.start'));
     }
   }
-  const modal = (dlg: HTMLDialogElement) => { dlg.showModal(); };
 
   function toggle(pubId: string) {
     selectedId = pubId;
@@ -122,7 +112,7 @@
 
 {#if !count}
   <div class="stack home">
-    <button type="button" class="primary big wide" onclick={begin}><Icon name="plus" size={24} /> {t('count.new')}</button>
+    <button type="button" class="primary big wide" onclick={() => (asking = true)}><Icon name="plus" size={24} /> {t('count.new')}</button>
     <h2 class="sec">{t('count.history')}</h2>
     {#if history.length === 0}
       <p class="muted">{t('count.history.empty')}</p>
@@ -194,21 +184,7 @@
 {/if}
 
 {#if asking}
-  <dialog use:modal aria-labelledby="who-title" oncancel={(e) => { e.preventDefault(); asking = false; }}>
-    <form class="content" onsubmit={confirmName}>
-      <h2 id="who-title" class="visually-hidden">{t('count.new')}</h2>
-      <p class="muted">{t('form.required')}</p>
-      <label class="field">
-        <span>{t('count.who')} <span aria-hidden="true">*</span></span>
-        <input maxlength="200" aria-required="true" bind:value={name} autocomplete="off" aria-invalid={nameError} aria-describedby={nameError ? 'who-err' : undefined} />
-      </label>
-      {#if nameError}<p id="who-err" role="alert" class="err">{t('count.who.required')}</p>{/if}
-      <div class="actions">
-        <button type="button" onclick={() => (asking = false)}>{t('dialog.cancel')}</button>
-        <button type="submit" class="primary">{t('count.start')}</button>
-      </div>
-    </form>
-  </dialog>
+  <CounterDialog initial={app.ds.settings.lastCounter ?? ''} onsubmit={start} oncancel={() => (asking = false)} />
 {/if}
 
 <style>

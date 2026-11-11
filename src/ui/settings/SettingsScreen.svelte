@@ -1,21 +1,17 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { act, app, replaceDataset, wipeDevice } from '../../store/app.svelte';
-  import { getCorrupt, listBackups, type Backup } from '../../store/persist';
-  import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
+  import { act, app } from '../../store/app.svelte';
+  import { fmtNumber, i18n, t } from '../../i18n/index.svelte';
   import { pubLanguageOf } from '../../domain/dataset';
-  import { exportFileName, parseDataset, serializeDataset } from '../../domain/file';
-  import { clean, localDate } from '../../domain/text';
+    import { clean } from '../../domain/text';
   import { fromGrams } from '../../domain/units';
   import type { Dataset, Lang, ScaleRange, Theme, WeightUnit } from '../../domain/types';
   import { applyTheme } from '../theme';
   import ConfirmDialog from '../shared/ConfirmDialog.svelte';
-  import { showToast } from '../shared/Toast.svelte';
-  import { openPubcountText, pickTextFile, shareOrDownload } from '../shared/fileio';
   import LanguagePicker from '../shared/LanguagePicker.svelte';
   import ScaleEditor from './ScaleEditor.svelte';
   import HowItWorks from './HowItWorks.svelte';
   import CloudSection from './CloudSection.svelte';
+  import DataSection from './DataSection.svelte';
   import Icon from '../shared/Icon.svelte';
 
   const themes: Theme[] = ['system', 'light', 'dark'];
@@ -26,19 +22,10 @@
 
   let view = $state<'main' | 'how'>('main');
   let editingScale = $state(false);
-  let confirm = $state<'clearScale' | 'open' | 'wipe' | 'wipeType' | null>(null);
-  let restoring = $state<Backup | null>(null);
-  let pendingText = '';
-  let error = $state('');
-  let backups = $state<Backup[]>([]);
-  let corrupt = $state<unknown>(undefined);
+  let confirm = $state<'clearScale' | null>(null);
 
   const settings = $derived(app.ds.settings);
   const num = (g: number) => fmtNumber(fromGrams(g, settings.unit), 3);
-  const when = (iso: string) => `${fmtDate(iso)} ${new Date(iso).toLocaleTimeString(i18n.lang, { hour: '2-digit', minute: '2-digit' })}`;
-  const reason = (r: string) => { const k = `set.reason.${r}`; const m = t(k); return m === k ? r : m; };
-  const refresh = async () => { backups = await listBackups(); corrupt = await getCorrupt(); };
-  onMount(refresh);
 
   // NOTE: old datasets lack pubLanguage; the displayed default is persisted with the first settings save.
   const save = (fn: (ds: Dataset) => void) => act((ds) => { ds.settings.pubLanguage ||= pubLanguageOf(ds.settings, i18n.lang); fn(ds); });
@@ -56,55 +43,6 @@
   function saveScale(scale: ScaleRange[]) { save((ds) => { ds.settings.scale = scale; }); editingScale = false; }
   function clearScale() { confirm = null; save((ds) => { ds.settings.scale = null; }); }
 
-  async function handover() {
-    try {
-      await shareOrDownload(exportFileName(app.ds, localDate()), serializeDataset($state.snapshot(app.ds) as Dataset), 'application/json');
-    } catch { showToast(t('set.handoverErr')); }
-  }
-  async function exportCorrupt() {
-    try {
-      await shareOrDownload(`pubcount-unreadable-${localDate()}.json`, JSON.stringify(corrupt, null, 2), 'application/json');
-    } catch { showToast(t('set.handoverErr')); }
-  }
-  async function replaceWith(run: () => Promise<string>) {
-    error = '';
-    try {
-      const r = await run();
-      if (r === 'ok') showToast(t('set.openDone'));
-      else error = t(`set.err.${r}`);
-    } catch (e) {
-      error = t(e === 'backupFailed' ? 'set.err.backupFailed' : 'set.err.invalid');
-    }
-    await refresh();
-  }
-  async function openFile() {
-    error = '';
-    const text = await pickTextFile('.pubcount,application/json');
-    if (text === null) return;
-    // NOTE: parse first so an unusable file shows its error instead of a pointless confirmation.
-    const parsed = parseDataset(text);
-    if (!parsed.ok) { error = t(`set.err.${parsed.error}`); return; }
-    if (app.ds.publications.length > 0) { pendingText = text; confirm = 'open'; } else await replaceWith(() => openPubcountText(text));
-  }
-  function confirmOpen() { confirm = null; return replaceWith(() => openPubcountText(pendingText)); }
-  async function confirmWipe() {
-    confirm = null;
-    error = '';
-    try { await wipeDevice(); } catch { error = t('set.wipeErr'); }
-  }
-  async function restore() {
-    const b = restoring;
-    restoring = null;
-    if (!b) return;
-    error = '';
-    try {
-      await replaceDataset(b.dataset, 'restore backup');
-      showToast(t('set.restoreDone'));
-    } catch (e) {
-      error = t(e === 'backupFailed' ? 'set.err.backupFailed' : 'set.err.invalid');
-    }
-    await refresh();
-  }
 </script>
 
 <div class="col">
@@ -177,32 +115,7 @@
       <CloudSection />
     </section>
 
-    <section class="card stack">
-      <h2 class="sec">{t('set.data')}</h2>
-      <div class="btn-row">
-        <button type="button" onclick={handover}><Icon name="share" /> {t('set.handover')}</button>
-        <button type="button" onclick={openFile}><Icon name="folder" /> {t('set.open')}</button>
-      </div>
-      {#if corrupt !== undefined}
-        <button type="button" onclick={exportCorrupt}>{t('set.exportCorrupt')}</button>
-      {/if}
-      {#if error}<p class="bad" role="alert">{error}</p>{/if}
-      <h3>{t('set.restore')}</h3>
-      {#if backups.length === 0}
-        <p class="muted">{t('set.noBackups')}</p>
-      {:else}
-        <ul class="backups">
-          {#each backups as b (b.savedAt)}
-            <li>
-              <span>{t('set.backupInfo', { when: when(b.savedAt), reason: reason(b.reason), count: b.dataset.publications.length })}</span>
-              <button type="button" onclick={() => (restoring = b)}><Icon name="undo" /> {t('set.restoreBtn')}</button>
-            </li>
-          {/each}
-        </ul>
-      {/if}
-      <h3>{t('set.wipe')}</h3>
-      <button type="button" class="danger" onclick={() => (confirm = 'wipe')}><Icon name="trash" /> {t('set.wipe')}</button>
-    </section>
+    <DataSection />
 
     <div class="btn-row">
       <button type="button" onclick={() => (view = 'how')}><Icon name="info" /> {t('set.howLink')}</button>
@@ -213,19 +126,7 @@
 
 <ConfirmDialog open={confirm === 'clearScale'} title={t('set.scaleClearTitle')} message={t('set.scaleClearMessage')}
   confirmLabel={t('set.scaleClearConfirm')} danger onconfirm={clearScale} oncancel={() => (confirm = null)} />
-<ConfirmDialog open={confirm === 'open'} title={t('set.openTitle')} message={t('set.openMessage')}
-  confirmLabel={t('set.openConfirm')} danger onconfirm={confirmOpen} oncancel={() => (confirm = null)} />
-<ConfirmDialog open={confirm === 'wipe'} title={t('set.wipeTitle')} message={t('set.wipeMessage')}
-  confirmLabel={t('set.wipeNext')} danger onconfirm={() => (confirm = 'wipeType')} oncancel={() => (confirm = null)} />
-<ConfirmDialog open={confirm === 'wipeType'} title={t('set.wipeTitle2')} message={t('set.wipeMessage2')}
-  confirmLabel={t('set.wipeConfirm')} requireText={t('set.wipeWord')} danger onconfirm={confirmWipe} oncancel={() => (confirm = null)} />
-<ConfirmDialog open={restoring !== null} title={t('set.restoreTitle')} message={t('set.restoreMessage')}
-  confirmLabel={t('set.restoreConfirm')} danger onconfirm={restore} oncancel={() => (restoring = null)} />
-
 <style>
   .col { max-width: 560px; margin: 0 auto; display: grid; gap: var(--sp-4); }
-  .card > button { justify-self: start; }
   .btn-row > * { flex: 1 1 auto; }
-  .backups { list-style: none; padding: 0; display: grid; gap: var(--sp-2); }
-  .backups li { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); }
 </style>

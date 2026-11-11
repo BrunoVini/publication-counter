@@ -2,17 +2,20 @@
   import { untrack } from 'svelte';
   import { app, act } from '../../store/app.svelte';
   import { fmtNumber, i18n, t } from '../../i18n/index.svelte';
-  import { addEntry, deleteEntry, markZero, openCount, resetItem, updateEntry, updatePublication } from '../../domain/dataset';
-  import { capacityG, checkWeighing, fractionWarning, itemTotal, unitWeightG } from '../../domain/calc';
-  import type { ItemTotal, WeighingIssue } from '../../domain/calc';
-  import { fromGrams, parseDecimal, toGrams } from '../../domain/units';
+  import { addEntry, deleteEntry, markZero, openCount } from '../../domain/dataset';
+  import { capacityG, checkWeighing, fractionWarning, unitWeightG } from '../../domain/calc';
+  import type { WeighingIssue } from '../../domain/calc';
+  import { fromGrams } from '../../domain/units';
   import type { Entry } from '../../domain/types';
-  import ConfirmDialog from '../shared/ConfirmDialog.svelte';
-  import { showToast } from '../shared/Toast.svelte';
+    import { showToast } from '../shared/Toast.svelte';
   import SampleForm from './SampleForm.svelte';
   import WeightInput from './WeightInput.svelte';
   import Icon from '../shared/Icon.svelte';
-  import { errorMessage, parseWhole } from './errors';
+  import { errorMessage } from './errors';
+  import { itemSummary, totalText, type Confirm } from './item-format';
+  import ItemConfirm from './ItemConfirm.svelte';
+  import EntryList from './EntryList.svelte';
+  import QuantityForms from './QuantityForms.svelte';
 
   const { countId, pubId }: { countId: string; pubId: string } = $props();
 
@@ -29,20 +32,13 @@
   let tabChoice = $state<Tab | null>(null);
   const tab = $derived<Tab>(tabChoice ?? (pub?.defaultMode === 'hand' ? 'hand' : 'weigh'));
 
-  const summary = $derived.by((): { total: ItemTotal | null; attention: boolean } => {
-    if (!item) return { total: null, attention: false };
-    try { return { total: itemTotal(item, scale), attention: false }; } catch { return { total: null, attention: true }; }
-  });
-  const totalText = (tt: ItemTotal): string =>
-    tt.margin > 0 ? t('item.total', { n: fmtNumber(tt.units, 0), m: fmtNumber(tt.margin, 0) }) : fmtNumber(tt.units, 0);
+  const summary = $derived(itemSummary(item, scale));
   const headerText = $derived(
     summary.attention ? t('count.status.attention') : summary.total ? totalText(summary.total) : t('count.status.none'),
   );
 
   let error = $state('');
   let wi: WeightInput | undefined = $state();
-  let packsInput: HTMLInputElement | undefined = $state();
-  let handInput: HTMLInputElement | undefined = $state();
   let menu: HTMLDetailsElement | undefined = $state();
 
   function run(fn: () => void): boolean {
@@ -84,7 +80,7 @@
   // NOTE: a pending confirmation is only valid for the entries it was computed against.
   $effect(() => {
     void item?.entries.length;
-    untrack(() => { pending = null; editPending = null; });
+    untrack(() => { pending = null; });
   });
 
   function commitWeighing(grams: number): boolean {
@@ -119,125 +115,8 @@
   let handText = $state('');
   let formError = $state('');
 
-  function addSealed(): void {
-    const packs = parseWhole(packsText);
-    const perPack = parseWhole(perPackText);
-    if (packs === null || perPack === null) { formError = t('sealed.invalid'); return; }
-    formError = '';
-    let entry: Entry | undefined;
-    const ok = run(() => {
-      entry = act((ds) => {
-        const e = addEntry(ds, countId, pubId, { kind: 'sealed', packs, perPack }, uid);
-        if (pub?.packSize !== perPack) updatePublication(ds, pubId, { packSize: perPack });
-        return e;
-      });
-    });
-    if (!ok) return;
-    announce(entry!, packs * perPack);
-    packsText = '';
-    packsInput?.focus();
-  }
-  function addHand(): void {
-    const units = parseWhole(handText);
-    if (units === null) { formError = t('hand.invalid'); return; }
-    formError = '';
-    let entry: Entry | undefined;
-    if (!run(() => { entry = act((ds) => addEntry(ds, countId, pubId, { kind: 'hand', units }, uid)); })) return;
-    announce(entry!, units);
-    handText = '';
-    handInput?.focus();
-  }
-
-  // Entries list and inline edit
-  let showAll = $state(false);
-  const ordered = $derived(item ? [...item.entries].reverse() : []);
-  const shown = $derived(showAll ? ordered : ordered.slice(0, 3));
-  const unitsOfEntry = (e: Entry): number | null =>
-    e.kind === 'weighing' ? unitsOf(e.weightG) : e.kind === 'sealed' ? e.packs * e.perPack : e.units;
-  const entryText = (e: Entry): string =>
-    e.kind === 'weighing' ? t('entry.weighing', { value: fmtW(e.weightG) })
-    : e.kind === 'sealed' ? t('entry.sealed', { packs: fmtNumber(e.packs, 0), perPack: fmtNumber(e.perPack, 0) })
-    : e.kind === 'hand' ? t('entry.hand', { units: fmtNumber(e.units, 0) })
-    : t('entry.sample', { units: fmtNumber(e.units, 0), value: fmtW(e.weightG) });
-
-  let editing = $state<{ id: string; a: string; b: string; a0: string; b0: string } | null>(null);
-  let editPending = $state<WeighingIssue[] | null>(null);
-  function startEdit(e: Entry): void {
-    if (e.kind === 'sample') return;
-    error = '';
-    editPending = null;
-    const [a, b] = e.kind === 'weighing' ? [plain(e.weightG), '']
-      : e.kind === 'sealed' ? [String(e.packs), String(e.perPack)]
-      : [String(e.units), ''];
-    editing = { id: e.id, a, b, a0: a, b0: b };
-  }
-  const draft = $derived.by((): Entry | null => {
-    const old = editing && item?.entries.find((e) => e.id === editing!.id);
-    if (!editing || !old) return null;
-    if (old.kind === 'weighing') {
-      const v = parseDecimal(editing.a);
-      return v !== null && v > 0 ? { ...old, weightG: toGrams(v, unit) } : null;
-    }
-    if (old.kind === 'sealed') {
-      const packs = parseWhole(editing.a);
-      const perPack = parseWhole(editing.b);
-      return packs !== null && perPack !== null ? { ...old, packs, perPack } : null;
-    }
-    if (old.kind === 'hand') {
-      const units = parseWhole(editing.a);
-      return units !== null ? { ...old, units } : null;
-    }
-    return null;
-  });
-  const draftTotal = $derived.by((): string | null => {
-    const d = draft;
-    if (!d || !item) return null;
-    try {
-      const tt = itemTotal({ ...item, entries: item.entries.map((e) => (e.id === d.id ? d : e)) }, scale);
-      return tt ? totalText(tt) : null;
-    } catch { return null; }
-  });
-  function saveEdit(force = false): void {
-    if (!draft || !editing) { error = errorMessage(new Error('invalidEntry')); return; }
-    const d = draft;
-    if (editing.a === editing.a0 && editing.b === editing.b0) { editing = null; editPending = null; return; }
-    if (d.kind === 'weighing' && item && !force) {
-      let issues: WeighingIssue[] = [];
-      try { issues = checkWeighing(d.weightG, { ...item, entries: item.entries.filter((e) => e.id !== d.id) }, scale); } catch { issues = []; }
-      if (issues.includes('overCapacity')) {
-        const cap = capacityG(scale);
-        error = t('err.overCapacity', { cap: cap === null ? '' : fmtW(cap) });
-        editPending = null;
-        return;
-      }
-      if (issues.length > 0) { error = ''; editPending = issues; return; }
-    }
-    editPending = null;
-    if (run(() => act((ds) => updateEntry(ds, countId, pubId, d.id, d)))) editing = null;
-  }
-
   // Confirmations
-  let confirm = $state<{ kind: 'delete'; id: string } | { kind: 'recount' } | { kind: 'zero' } | null>(null);
-  const dialog = $derived.by(() => {
-    const c = confirm;
-    if (!c) return { title: '', message: '', label: '' };
-    if (c.kind === 'recount') return { title: t('item.recount.title'), message: t('item.recount.message'), label: t('item.recount.confirm') };
-    if (c.kind === 'zero') return { title: t('item.zero.title'), message: t('item.zero.message'), label: t('item.zero.confirm') };
-    const e = item?.entries.find((x) => x.id === c.id);
-    const message = !e || e.kind === 'sample' ? ''
-      : e.kind === 'weighing' ? t('entry.delete.weighing', { value: fmtW(e.weightG) })
-      : e.kind === 'sealed' ? t('entry.delete.sealed', { packs: fmtNumber(e.packs, 0), perPack: fmtNumber(e.perPack, 0) })
-      : t('entry.delete.hand', { units: fmtNumber(e.units, 0) });
-    return { title: t('entry.delete.title'), message, label: t('entry.delete.confirm') };
-  });
-  function doConfirm(): void {
-    const c = confirm;
-    confirm = null;
-    if (!c) return;
-    if (c.kind === 'delete') run(() => act((ds) => deleteEntry(ds, countId, pubId, c.id)));
-    else if (c.kind === 'recount') run(() => act((ds) => resetItem(ds, countId, pubId)));
-    else run(() => act((ds) => markZero(ds, countId, pubId)));
-  }
+  let confirm = $state<Confirm | null>(null);
   const onZero = (): void => {
     if (item && item.entries.length > 0) confirm = { kind: 'zero' };
     else run(() => act((ds) => markZero(ds, countId, pubId)));
@@ -308,19 +187,9 @@
             </div>
           </div>
         {/if}
-      {:else if tab === 'sealed'}
-        <form class="grid" onsubmit={(e) => { e.preventDefault(); addSealed(); }}>
-          <label class="field">{t('sealed.packs')}<input bind:this={packsInput} type="text" inputmode="numeric" bind:value={packsText} /></label>
-          <label class="field">{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={perPackText} /></label>
-          {#if formError}<p class="bad" role="alert">{formError}</p>{/if}
-          <button type="submit" class="primary big">{t('weight.add')}</button>
-        </form>
       {:else}
-        <form class="grid" onsubmit={(e) => { e.preventDefault(); addHand(); }}>
-          <label class="field">{t('hand.units')}<input bind:this={handInput} type="text" inputmode="numeric" bind:value={handText} /></label>
-          {#if formError}<p class="bad" role="alert">{formError}</p>{/if}
-          <button type="submit" class="primary big">{t('weight.add')}</button>
-        </form>
+        <QuantityForms {tab} {countId} {pubId} packSize={pub?.packSize} {run} {announce}
+          bind:packsText bind:perPackText bind:handText bind:formError />
       {/if}
 
       <div class="more">
@@ -335,65 +204,12 @@
       </div>
     {/if}
 
-    {#if ordered.length > 0}
-      <h3 class="sec">{t('entries.title')}</h3>
-      <ul class="entries">
-        {#each shown as e (e.id)}
-          <li class:editing={editing?.id === e.id && editable}>
-            {#if editing && editing.id === e.id && editable}
-              <form class="grid" onsubmit={(ev) => { ev.preventDefault(); saveEdit(); }} oninput={() => (editPending = null)}>
-                <p class="muted">{t('entry.edit.old', { value: entryText(e) })}</p>
-                {#if e.kind === 'weighing'}
-                  <label class="field">{t('entry.edit.weight', { unit })}<input type="text" inputmode="decimal" bind:value={editing.a} /></label>
-                {:else if e.kind === 'sealed'}
-                  <label class="field">{t('sealed.packs')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
-                  <label class="field">{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={editing.b} /></label>
-                {:else}
-                  <label class="field">{t('hand.units')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
-                {/if}
-                {#if editPending}
-                  <div class="warn" role="alert">
-                    {#each editPending as issue (issue)}<p>{t(`warn.${issue}`)}</p>{/each}
-                    <div class="btn-row">
-                      <button type="button" onclick={() => saveEdit(true)}>{t('warn.saveAnyway')}</button>
-                      <button type="button" onclick={() => (editPending = null)}>{t('dialog.cancel')}</button>
-                    </div>
-                  </div>
-                {/if}
-                {#if draftTotal}<p class="muted" aria-live="polite">{t('entry.edit.newTotal', { total: draftTotal })}</p>{/if}
-                <div class="actions">
-                  <button type="button" onclick={() => (editing = null)}>{t('dialog.cancel')}</button>
-                  <button type="submit" class="primary">{t('entry.save')}</button>
-                </div>
-              </form>
-            {:else}
-              {@const n = unitsOfEntry(e)}
-              <span class="val">{entryText(e)}</span>
-              {#if n !== null && e.kind !== 'sample'}<span class="muted">{t('entry.units', { n: fmtNumber(n, n < 100 ? 1 : 0) })}</span>{/if}
-              {#if editable}
-                {#if e.kind === 'sample'}
-                  <button type="button" onclick={resample}>{t('item.resample')}</button>
-                {:else}
-                  <button type="button" class="icon-btn" aria-label={t('entry.edit')} onclick={() => startEdit(e)}><Icon name="pencil" size={22} /></button>
-                  <button type="button" class="icon-btn danger" aria-label={t('entry.delete')} onclick={() => (confirm = { kind: 'delete', id: e.id })}><Icon name="trash" size={22} /></button>
-                {/if}
-              {/if}
-            {/if}
-          </li>
-        {/each}
-      </ul>
-      {#if ordered.length > 3}
-        <button type="button" onclick={() => (showAll = !showAll)}>
-          <Icon name={showAll ? 'up' : 'down'} />
-          {showAll ? t('entries.showLess') : t('entries.seeAll', { count: ordered.length })}
-        </button>
-      {/if}
-    {/if}
+    <EntryList {item} {unit} {scale} {editable} {countId} {pubId} {fmtW} {plain} {unitsOf} {run}
+      onerror={(m) => (error = m)} onresample={resample} ondelete={(id) => (confirm = { kind: 'delete', id })} />
   {/if}
 </section>
 
-<ConfirmDialog open={confirm !== null} title={dialog.title} message={dialog.message} confirmLabel={dialog.label}
-  danger onconfirm={doConfirm} oncancel={() => (confirm = null)} />
+<ItemConfirm bind:confirm {item} {countId} {pubId} {fmtW} {run} />
 
 <style>
   .panel { display: grid; gap: var(--sp-3); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
@@ -407,15 +223,9 @@
   .tabs button { flex: 1; padding: 0 var(--sp-1); }
   /* NOTE: the selected tab is filled and heavier, not just a different colour. */
   .tabs button[aria-selected='true'] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
-  .grid { display: grid; gap: var(--sp-2); }
   .more { display: flex; gap: var(--sp-2); align-items: start; flex-wrap: wrap; }
   summary { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: var(--tap); padding: 0 var(--sp-3); border-radius: var(--radius); color: var(--muted); font-weight: 600; cursor: pointer; list-style: none; }
   summary::-webkit-details-marker { display: none; }
   .menu { display: grid; gap: var(--sp-2); margin-top: var(--sp-1); }
   .menu button { justify-content: flex-start; }
-  .entries { list-style: none; padding: 0; display: grid; gap: var(--sp-1); }
-  .entries li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); padding: 2px var(--sp-1) 2px var(--sp-3); min-height: var(--tap-lg); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
-  .entries li.editing { padding: var(--sp-3); border: 2px solid var(--accent); }
-  .entries form { flex: 1; }
-  .val { font-weight: 600; flex: 1; }
 </style>
