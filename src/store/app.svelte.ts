@@ -9,6 +9,10 @@ export const app = $state({
   openItemId: null as string | null,
   // NOTE: set by first run's "Paste list"; the publications tab consumes it to open the paste dialog.
   pasteOpen: false,
+  // NOTE: set by the Summary button and by history rows; the Summary screen consumes it.
+  summaryCountId: null as string | null,
+  // NOTE: set by "Create '<text>'" in the count search; the publications tab consumes it.
+  pubDraftName: null as string | null,
 });
 
 let chain: Promise<unknown> = Promise.resolve();

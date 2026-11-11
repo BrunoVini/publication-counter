@@ -4,6 +4,7 @@
   import { t } from '../i18n/index.svelte';
   import Toast from './shared/Toast.svelte';
   import FirstRun from './FirstRun.svelte';
+  import CountScreen from './count/CountScreen.svelte';
 
   const tabs = ['count', 'publications', 'settings'] as const;
   const icons = { count: '☰', publications: '▤', settings: '⚙' } as const;
@@ -37,6 +38,15 @@
 
     <main>
       <h1>{t(`nav.${app.tab}`)}</h1>
+      {#if app.tab === 'count'}
+        {#if app.summaryCountId}
+          <!-- NOTE: placeholder until the Summary screen exists. -->
+          <p>{t('count.summary')}</p>
+          <button type="button" onclick={() => (app.summaryCountId = null)}>{t('item.close')}</button>
+        {:else}
+          <CountScreen />
+        {/if}
+      {/if}
     </main>
   </div>
 {/if}
