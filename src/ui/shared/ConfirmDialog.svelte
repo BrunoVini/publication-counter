@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t } from '../../i18n/index.svelte';
+  import { intlLocale, t } from '../../i18n/index.svelte';
 
   const { open, title, message, confirmLabel, danger = false, requireText, onconfirm, oncancel }: {
     open: boolean; title: string; message: string; confirmLabel: string;
@@ -8,8 +8,10 @@
 
   let dlg: HTMLDialogElement;
   let typed = $state('');
-  // NOTE: trimmed and case-insensitive, so a phone keyboard's auto-capitalisation or a stray space does not block.
-  const ok = $derived(!requireText || typed.trim().toLowerCase() === requireText.trim().toLowerCase());
+  // NOTE: trimmed, case-insensitive in the UI locale (Turkish "SİL" vs "sil") and accent-insensitive, so a phone
+  // keyboard's auto-capitalisation, a stray space or a missing accent does not block.
+  const fold = (s: string) => s.trim().toLocaleLowerCase(intlLocale()).normalize('NFD').replace(/\p{M}/gu, '');
+  const ok = $derived(!requireText || fold(typed) === fold(requireText));
   $effect(() => {
     if (open && !dlg.open) { typed = ''; dlg.showModal(); }
     else if (!open && dlg.open) dlg.close();

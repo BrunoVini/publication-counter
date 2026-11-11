@@ -10,6 +10,9 @@ const locales: Record<Lang, string> = {
 };
 const RTL: readonly Lang[] = ['ar', 'ur'];
 
+/** The Intl locale tag of the current UI language. */
+export const intlLocale = (): string => locales[i18n.lang];
+
 export function detectLang(navigatorLanguages: readonly string[]): Lang {
   for (const tag of navigatorLanguages) {
     const base = tag.toLowerCase().split('-')[0] as Lang;

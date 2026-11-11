@@ -27,6 +27,23 @@ describe('typed confirmation', () => {
     expect(onconfirm).toHaveBeenCalledTimes(1);
   });
 
+  test.each([
+    ['tr', 'SİL', ['sil', 'SİL', 'Sil']],
+    ['de', 'LÖSCHEN', ['löschen', 'LÖSCHEN']],
+    ['pt', 'APAGAR', ['apagar', 'APAGAR']],
+  ] as const)('%s word %s matches locale-aware spellings', async (lang, word, typedValues) => {
+    i18n.lang = lang;
+    expect(t('set.wipeWord')).toBe(word);
+    render(ConfirmDialog, { open: true, title: 'x', message: 'y', confirmLabel: 'Go', requireText: word, onconfirm() {}, oncancel() {} });
+    const go = screen.getByRole<HTMLButtonElement>('button', { name: 'Go' });
+    for (const value of typedValues) {
+      await fireEvent.input(screen.getByRole('textbox'), { target: { value } });
+      expect(go.disabled, value).toBe(false);
+      await fireEvent.input(screen.getByRole('textbox'), { target: { value: 'x' } });
+      expect(go.disabled).toBe(true);
+    }
+  });
+
   test('without requireText there is no input and the button is enabled', () => {
     render(ConfirmDialog, { open: true, title: 'x', message: 'y', confirmLabel: 'Go', onconfirm() {}, oncancel() {} });
     expect(screen.queryByRole('textbox')).toBeNull();
