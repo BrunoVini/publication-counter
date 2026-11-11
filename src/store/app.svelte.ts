@@ -1,3 +1,4 @@
+import { validateDataset } from '../domain/file';
 import { emptyDataset } from '../domain/dataset';
 import type { Dataset } from '../domain/types';
 import { loadDataset, pushBackup, requestPersistentStorage, saveDataset } from './persist';
@@ -57,7 +58,13 @@ export async function init(): Promise<void> {
 }
 
 export function act<T>(fn: (ds: Dataset) => T): T {
-  const result = fn(app.ds); // domain errors propagate; nothing is saved
+  // NOTE: transactional: any throw or schema-invalid result restores the snapshot, so memory
+  // never holds data the file schema would reject on the next launch.
+  const before = $state.snapshot(app.ds) as Dataset;
+  const restore = () => { app.ds = before; };
+  let result: T;
+  try { result = fn(app.ds); } catch (e) { restore(); throw e; }
+  if (!validateDataset($state.snapshot(app.ds))) { restore(); throw new Error('invalidData'); }
   save();
   return result;
 }

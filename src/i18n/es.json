@@ -203,6 +203,7 @@
   "pubs.paste.dupCatalogue": "Ya está en el catálogo",
   "pubs.paste.add": "Añadir {count}",
   "pubs.paste.added": "{count} añadidas",
+  "err.invalidData": "Este valor es demasiado grande o contiene caracteres no válidos.",
   "err.duplicate": "Ya existe una publicación con este nombre, idioma y variante.",
   "err.invalidPublication": "Introduce un nombre válido.",
   "set.appearance": "Apariencia",

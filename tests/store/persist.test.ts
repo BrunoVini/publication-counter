@@ -9,7 +9,7 @@ vi.mock('idb-keyval', async (orig) => {
 
 import { listBackups, loadDataset, pushBackup, saveDataset, setStore } from '../../src/store/persist';
 import { act, app, flushSaves, init, replaceDataset } from '../../src/store/app.svelte';
-import { addPublication, emptyDataset } from '../../src/domain/dataset';
+import { addEntry, addPublication, emptyDataset, startCount } from '../../src/domain/dataset';
 
 let n = 0;
 beforeEach(() => { setStore(createStore(`t${n++}`, 'kv')); });
@@ -52,6 +52,28 @@ describe('app', () => {
     await flushSaves();
     expect((await loadDataset())?.publications).toHaveLength(1);
     expect(() => act(() => { throw 'boom'; })).toThrow('boom');
+  });
+
+  it('act that throws midway leaves ds unchanged', async () => {
+    await init();
+    act((ds) => addPublication(ds, { name: 'A', language: 'en', variant: '', defaultMode: 'weigh' }, () => 'pa'));
+    const before = JSON.stringify(app.ds);
+    expect(() => act((ds) => { ds.publications[0].name = 'changed'; ds.settings.unit = 'kg'; throw new Error('mid'); })).toThrow('mid');
+    expect(JSON.stringify(app.ds)).toBe(before);
+  });
+
+  it('act rejects data the file schema would reject and changes nothing', async () => {
+    await init();
+    act((ds) => addPublication(ds, { name: 'A', language: 'en', variant: '', defaultMode: 'weigh', sample: { units: 10, weightG: 10 } }, () => 'pa'));
+    act((ds) => startCount(ds, 'Ann', '2026-01-01', () => 'c1'));
+    const before = JSON.stringify(app.ds);
+    expect(() => act((ds) => addEntry(ds, 'c1', 'pa', { kind: 'weighing', weightG: 12_300_000 }, () => 'e1'))).toThrow('invalidData');
+    expect(JSON.stringify(app.ds)).toBe(before);
+    await flushSaves();
+    expect(await loadDataset()).toEqual(JSON.parse(before));
+    // reactivity still works after a restore
+    act((ds) => addEntry(ds, 'c1', 'pa', { kind: 'weighing', weightG: 5 }, () => 'e2'));
+    expect(app.ds.counts[0].items[0].entries).toHaveLength(1);
   });
 
   it('replaceDataset backs up previous', async () => {

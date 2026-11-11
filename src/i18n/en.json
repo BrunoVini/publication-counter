@@ -203,6 +203,7 @@
   "pubs.paste.dupCatalogue": "Already in catalogue",
   "pubs.paste.add": "Add {count}",
   "pubs.paste.added": "{count} added",
+  "err.invalidData": "This value is too large or contains invalid characters.",
   "err.duplicate": "A publication with this name, language and variant already exists.",
   "err.invalidPublication": "Enter a valid name.",
   "set.appearance": "Appearance",

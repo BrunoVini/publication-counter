@@ -68,6 +68,12 @@ function structureOk(ds: Dataset): boolean {
 
 export const serializeDataset = (ds: Dataset): string => JSON.stringify(ds, null, 2);
 
+/** Same schema and structural checks as parseDataset, for an in-memory value. */
+export function validateDataset(ds: unknown): boolean {
+  const r = v.safeParse(schema, ds);
+  return r.success && structureOk(r.output as Dataset);
+}
+
 export function parseDataset(textIn: string):
   { ok: true; dataset: Dataset } | { ok: false; error: 'notJson' | 'invalid' | 'tooNew' } {
   if (textIn.length > 5_000_000) return { ok: false, error: 'invalid' };
@@ -75,9 +81,10 @@ export function parseDataset(textIn: string):
   try { raw = JSON.parse(textIn); } catch { return { ok: false, error: 'notJson' }; }
   const ver = (raw as { formatVersion?: unknown } | null)?.formatVersion;
   if (typeof ver === 'number' && ver > CURRENT_FORMAT) return { ok: false, error: 'tooNew' };
-  const r = v.safeParse(schema, migrate(raw));
-  if (!r.success || !structureOk(r.output as Dataset)) return { ok: false, error: 'invalid' };
-  return { ok: true, dataset: r.output as Dataset };
+  const migrated = migrate(raw);
+  if (!validateDataset(migrated)) return { ok: false, error: 'invalid' };
+  // NOTE: parsed twice (validate, then output) to keep one validation path; files are small.
+  return { ok: true, dataset: v.parse(schema, migrated) as Dataset };
 }
 
 export function exportFileName(ds: Dataset, today: string): string {
