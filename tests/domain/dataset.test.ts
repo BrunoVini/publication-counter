@@ -5,6 +5,7 @@ import {
 import { itemTotal } from '../../src/domain/calc';
 import { pub, err, setup } from './dataset-fixtures';
 import { loadLanguages } from '../../src/domain/languages.svelte';
+import { setLang } from '../../src/i18n/index.svelte';
 
 test('emptyDataset defaults and overrides', () => {
   const ds = emptyDataset('x', { unit: 'kg' });
@@ -126,6 +127,7 @@ test('weighing without sample throws missingSample', () => {
 
 
 test('legacy free-text language and its code count as the same identity', async () => {
+  await setLang('pt');
   await loadLanguages();
   const ds = emptyDataset('d1');
   const newId = (() => { let n = 0; return () => `x${++n}`; })();

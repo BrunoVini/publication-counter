@@ -19,7 +19,7 @@
   const hits = $derived(searchLanguages(query).filter((e) => !selected.includes(e.c)));
   const collator = $derived(new Intl.Collator(i18n.lang));
   const sorted = $derived(
-    hits.map((e) => ({ c: e.c, n: languageName(e.c, i18n.lang) })).sort((a, b) => collator.compare(a.n, b.n)).slice(0, LIMIT),
+    hits.map((e) => ({ c: e.c, n: languageName(e.c) })).sort((a, b) => collator.compare(a.n, b.n)).slice(0, LIMIT),
   );
 
   function toggle(code: string, on: boolean) {
@@ -28,7 +28,7 @@
   }
   const vernacular = (code: string): string => {
     const e = languageEntry(code);
-    return e && e.v && e.v !== languageName(code, i18n.lang) ? e.v : '';
+    return e && e.v && e.v !== languageName(code) ? e.v : '';
   };
 </script>
 
@@ -51,7 +51,7 @@
             checked={selected.includes(code)}
             onchange={(e) => toggle(code, e.currentTarget.checked)}
           />
-          <span>{languageName(code, i18n.lang)}{#if vernacular(code)} <span class="muted">· {vernacular(code)}</span>{/if}</span>
+          <span>{languageName(code)}{#if vernacular(code)} <span class="muted">· {vernacular(code)}</span>{/if}</span>
         </label>
       {/each}
       {#if hits.length === 0}<p class="muted">{t('lang.none')}</p>{/if}

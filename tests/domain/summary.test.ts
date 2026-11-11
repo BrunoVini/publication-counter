@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { addEntry, addPublication, deletePublication, emptyDataset, finishCount, startCount } from '../../src/domain/dataset';
 import { loadLanguages } from '../../src/domain/languages.svelte';
+import { setLang } from '../../src/i18n/index.svelte';
 import { summaryRows } from '../../src/domain/summary';
 
 const mkId = () => { let n = 0; return () => `id${++n}`; };
@@ -74,6 +75,7 @@ test('summary marks an invalid item as attention without breaking the others', (
 });
 
 test('summary groups and sorts by the displayed language name', async () => {
+  await setLang('pt');
   await loadLanguages();
   const newId = mkId();
   const ds = emptyDataset('d');
@@ -83,7 +85,8 @@ test('summary groups and sorts by the displayed language name', async () => {
   addPublication(ds, pub('C', 'S'), newId);
   addPublication(ds, pub('D', 'Legacy text'), newId);
   const c = startCount(ds, 'x', 't', newId);
-  const rows = summaryRows(ds, c.id, 'pt');
+  const rows = summaryRows(ds, c.id);
+  await setLang('en');
   expect(rows.map((r) => r.language)).toEqual(['Espanhol', 'Inglês', 'Legacy text', 'Português (Brasil)']);
 });
 

@@ -1,7 +1,7 @@
 import { itemTotal } from './calc';
 import { languageName } from './languages.svelte';
 import { identityKey } from './text';
-import type { Dataset, Lang } from './types';
+import type { Dataset } from './types';
 
 export interface SummaryRow {
   publicationId: string; name: string; language: string; variant: string;
@@ -17,8 +17,8 @@ function safeUnits(item: Parameters<typeof itemTotal>[0], scale: Parameters<type
   try { return { units: itemTotal(item, scale)?.units ?? null, bad: false }; } catch { return { units: null, bad: true }; }
 }
 
-/** `language` on each row is the displayed name in `lang`; rows are grouped and sorted by it. */
-export function summaryRows(ds: Dataset, countId: string, lang: Lang = 'en'): SummaryRow[] {
+/** `language` on each row is the displayed name in the current UI language; rows are grouped and sorted by it. */
+export function summaryRows(ds: Dataset, countId: string): SummaryRow[] {
   const count = ds.counts.find((c) => c.id === countId);
   if (!count) throw new Error('notFound');
   const scale = ds.settings.scale;
@@ -36,7 +36,7 @@ export function summaryRows(ds: Dataset, countId: string, lang: Lang = 'en'): Su
     const bigChange = units !== null && previous !== null && previous > 0
       && Math.abs(units - previous) / previous > BIG_CHANGE;
     return {
-      publicationId: item.publicationId, name: pub?.name ?? '', language: languageName(pub?.language ?? '', lang),
+      publicationId: item.publicationId, name: pub?.name ?? '', language: languageName(pub?.language ?? ''),
       variant: pub?.variant ?? '', units, previous, bigChange, entered: item.entered, attention: bad,
     };
   });

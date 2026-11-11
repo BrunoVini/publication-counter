@@ -2,9 +2,9 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import LanguagePicker from '../../src/ui/shared/LanguagePicker.svelte';
 import { loadLanguages } from '../../src/domain/languages.svelte';
-import { i18n } from '../../src/i18n/index.svelte';
+import { setLang } from '../../src/i18n/index.svelte';
 
-beforeAll(async () => { await loadLanguages(); i18n.lang = 'pt'; });
+beforeAll(async () => { await setLang('pt'); await loadLanguages(); });
 afterEach(cleanup);
 
 describe('language picker', () => {

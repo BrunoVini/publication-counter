@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { app, act } from '../../store/app.svelte';
-  import { i18n, t } from '../../i18n/index.svelte';
+  import { t } from '../../i18n/index.svelte';
   import { addPublication, openCount, archivePublication, copySample, deletePublication, updatePublication } from '../../domain/dataset';
   import { languageName } from '../../domain/languages.svelte';
   import { parseDecimal, toGrams } from '../../domain/units';
@@ -16,7 +16,7 @@
   const form = $state(untrack(() => initial));
   const closeForm = () => onclose();
 
-  const langName = (code: string) => languageName(code, i18n.lang);
+  const langName = (code: string) => languageName(code);
   const unit = $derived(app.ds.settings.unit);
   let dupError = $state('');
   let formError = $state('');

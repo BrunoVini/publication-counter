@@ -77,7 +77,7 @@
         <tbody>
           {#each rows as r, i (i)}
             <tr class={r.status}>
-              <td>{r.name}</td><td>{languageName(r.language, i18n.lang)}</td><td>{r.variant}</td>
+              <td>{r.name}</td><td>{languageName(r.language)}</td><td>{r.variant}</td>
               <td><Icon name={icon[r.status]} size={16} /> <span>{t(label[r.status])}</span></td>
             </tr>
           {/each}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { act, app } from '../../store/app.svelte';
-  import { i18n, t } from '../../i18n/index.svelte';
+  import { t } from '../../i18n/index.svelte';
   import { languageName } from '../../domain/languages.svelte';
   import LanguagePicker from './LanguagePicker.svelte';
 
@@ -40,7 +40,7 @@
 
 <select {id} aria-label={label} bind:this={select} {value} onchange={onselect}>
   {#if !value}<option value="" selected>—</option>{/if}
-  {#each codes as c (c)}<option value={c} selected={c === value}>{languageName(c, i18n.lang)}</option>{/each}
+  {#each codes as c (c)}<option value={c} selected={c === value}>{languageName(c)}</option>{/each}
   <option value={OTHER}>{t('lang.other')}</option>
 </select>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app, act } from '../../store/app.svelte';
-  import { i18n, t } from '../../i18n/index.svelte';
+  import { t } from '../../i18n/index.svelte';
   import { archivePublication, updatePublication } from '../../domain/dataset';
   import { identityKey } from '../../domain/text';
   import { languageName, loadLanguages } from '../../domain/languages.svelte';
@@ -12,7 +12,7 @@
   import Icon from '../shared/Icon.svelte';
 
   void loadLanguages();
-  const langName = (code: string) => languageName(code, i18n.lang);
+  const langName = (code: string) => languageName(code);
 
   // NOTE: jsdom has no matchMedia; without it the layout defaults to phone.
   let desktop = $state(false);

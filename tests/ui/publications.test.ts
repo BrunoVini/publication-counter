@@ -6,7 +6,7 @@ import PublicationsScreen from '../../src/ui/publications/PublicationsScreen.sve
 import Toast from '../../src/ui/shared/Toast.svelte';
 import { app } from '../../src/store/app.svelte';
 import { emptyDataset } from '../../src/domain/dataset';
-import { i18n } from '../../src/i18n/index.svelte';
+import { i18n, setLang } from '../../src/i18n/index.svelte';
 import { loadLanguages } from '../../src/domain/languages.svelte';
 import type { Publication } from '../../src/domain/types';
 
@@ -177,6 +177,10 @@ describe('publications screen', () => {
   });
 
   test('paste list preselects the primary language and maps exact names to codes', async () => {
+    // NOTE: pasted text matches any loaded name, whatever the current UI language.
+    await setLang('pt');
+    await loadLanguages();
+    await setLang('en');
     app.ds.settings.pubLanguage = 'S';
     render(PublicationsScreen);
     await fireEvent.click(screen.getByRole('button', { name: 'Paste list' }));

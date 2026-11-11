@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app, act } from '../../store/app.svelte';
-  import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
+  import { fmtDate, fmtNumber, t } from '../../i18n/index.svelte';
   import { finishCount, reopenCount, setEntered } from '../../domain/dataset';
   import { localDate } from '../../domain/text';
   import { summaryRows } from '../../domain/summary';
@@ -17,7 +17,7 @@
 
   void loadLanguages();
   const count = $derived(app.ds.counts.find((c) => c.id === countId));
-  const rows = $derived(count ? summaryRows(app.ds, countId, i18n.lang) : []);
+  const rows = $derived(count ? summaryRows(app.ds, countId) : []);
   const groups = $derived(
     rows.reduce<{ language: string; rows: typeof rows }[]>((acc, r) => {
       const last = acc[acc.length - 1];
