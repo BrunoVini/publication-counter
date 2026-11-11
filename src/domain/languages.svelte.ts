@@ -25,7 +25,11 @@ export const languagesLoaded = (): boolean => store.data !== null;
 export const languageEntry = (code: string): LanguageEntry | undefined => store.data?.byCode.get(code);
 
 /** Localised name for a code; legacy free text and unknown codes come back unchanged. */
-export const languageName = (code: string, ui: Lang): string => languageEntry(code)?.[ui] ?? code;
+export function languageName(code: string, ui: Lang): string {
+  const e = languageEntry(code);
+  // NOTE: the list only carries pt, en and es names; the other UI languages show the English one.
+  return e ? (e[ui as 'pt' | 'en' | 'es'] ?? e.en) : code;
+}
 
 /** Free text from a pasted column to a code, only on an exact (normalised) name match. */
 export function languageByName(text: string): string {

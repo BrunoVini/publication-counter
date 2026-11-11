@@ -1,6 +1,6 @@
 <script lang="ts">
   import { act, app } from '../../store/app.svelte';
-  import { fmtNumber, i18n, t } from '../../i18n/index.svelte';
+  import { fmtNumber, i18n, loadLocale, setLang, t } from '../../i18n/index.svelte';
   import { pubLanguageOf } from '../../domain/dataset';
     import { clean } from '../../domain/text';
   import { fromGrams } from '../../domain/units';
@@ -8,6 +8,7 @@
   import { applyTheme } from '../theme';
   import ConfirmDialog from '../shared/ConfirmDialog.svelte';
   import LanguagePicker from '../shared/LanguagePicker.svelte';
+  import UiLangSelect from '../shared/UiLangSelect.svelte';
   import ScaleEditor from './ScaleEditor.svelte';
   import HowItWorks from './HowItWorks.svelte';
   import CloudSection from './CloudSection.svelte';
@@ -15,9 +16,6 @@
   import Icon from '../shared/Icon.svelte';
 
   const themes: Theme[] = ['system', 'light', 'dark'];
-  const langs: { code: Lang; name: string }[] = [
-    { code: 'pt', name: 'Português' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
-  ];
   const units: WeightUnit[] = ['g', 'kg', 'lb', 'oz'];
 
   let view = $state<'main' | 'how'>('main');
@@ -30,7 +28,8 @@
   // NOTE: old datasets lack pubLanguage; the displayed default is persisted with the first settings save.
   const save = (fn: (ds: Dataset) => void) => act((ds) => { ds.settings.pubLanguage ||= pubLanguageOf(ds.settings, i18n.lang); fn(ds); });
   function chooseTheme(th: Theme) { save((ds) => { ds.settings.theme = th; }); applyTheme(th); }
-  function chooseLang(l: Lang) { save((ds) => { ds.settings.language = l; }); i18n.lang = l; }
+  // NOTE: saving happens before the switch so the persisted publication-language default still follows the previous UI language.
+  async function chooseLang(l: Lang) { await loadLocale(l); save((ds) => { ds.settings.language = l; }); await setLang(l); }
   function choosePrimary(c: string) {
     save((ds) => { ds.settings.pubLanguage = c; ds.settings.pubLanguages = (ds.settings.pubLanguages ?? []).filter((x) => x !== c); });
   }
@@ -59,14 +58,7 @@
           {/each}
         </div>
       </fieldset>
-      <fieldset class="segset">
-        <legend>{t('set.language')}</legend>
-        <div class="seg">
-          {#each langs as l (l.code)}
-            <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /><span>{l.name}</span></label>
-          {/each}
-        </div>
-      </fieldset>
+      <UiLangSelect legend={t('set.language')} onchoose={chooseLang} />
     </section>
 
     <section class="card stack">

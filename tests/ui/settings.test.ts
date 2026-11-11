@@ -75,8 +75,8 @@ describe('settings screen', () => {
 
   test('language switch updates i18n and settings', async () => {
     render(SettingsScreen);
-    await fireEvent.click(screen.getByRole('radio', { name: 'Español' }));
-    expect(i18n.lang).toBe('es');
+    await fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'es' } });
+    await waitFor(() => expect(i18n.lang).toBe('es'));
     expect(app.ds.settings.language).toBe('es');
   });
 

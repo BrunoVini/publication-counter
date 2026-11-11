@@ -1,17 +1,15 @@
 <script lang="ts">
   import { act, app } from '../store/app.svelte';
-  import { i18n, t } from '../i18n/index.svelte';
+  import { i18n, setLang, t } from '../i18n/index.svelte';
   import type { Lang, WeightUnit } from '../domain/types';
   import { openPubcountText, pickTextFile } from './shared/fileio';
   import { isIosBrowser } from './shared/platform';
   import { DEFAULT_PUB_LANGUAGE } from '../domain/dataset';
   import { languagesLoaded, loadLanguages } from '../domain/languages.svelte';
   import LanguagePicker from './shared/LanguagePicker.svelte';
+  import UiLangSelect from './shared/UiLangSelect.svelte';
   import Icon from './shared/Icon.svelte';
 
-  const langs: { code: Lang; name: string }[] = [
-    { code: 'pt', name: 'Português' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
-  ];
   const units: WeightUnit[] = ['g', 'kg', 'lb', 'oz'];
 
   // NOTE: simple heuristic: pounds only for US English devices, kilograms everywhere else.
@@ -41,8 +39,8 @@
     heading?.focus();
   });
 
-  function chooseLang(l: Lang) {
-    i18n.lang = l;
+  async function chooseLang(l: Lang) {
+    await setLang(l);
     if (!unitTouched) unit = defaultUnit();
     act((ds) => { ds.settings.language = l; ds.settings.unit = unit; });
   }
@@ -84,14 +82,7 @@
   <h1><Icon name="scale" size={28} /> {t('first.title')}</h1>
 
   {#if step === 1}
-    <fieldset class="segset">
-      <legend>{t('first.language')}</legend>
-      <div class="seg">
-        {#each langs as l (l.code)}
-          <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /><span>{l.name}</span></label>
-        {/each}
-      </div>
-    </fieldset>
+    <UiLangSelect legend={t('first.language')} onchoose={chooseLang} />
     <p class="muted">{t('form.required')}</p>
     <LanguagePicker mode="single" required legend={t('first.pubLanguage')} value={primary}
       onchange={(c) => { primary = c; primaryTouched = true; }} />

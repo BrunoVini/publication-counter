@@ -1,24 +1,75 @@
-import { describe, expect, test, beforeEach } from 'vitest';
-import { i18n, detectLang, t, fmtNumber, fmtDate } from '../../src/i18n/index.svelte';
+import { describe, expect, test, beforeEach, vi } from 'vitest';
+import { i18n, detectLang, setLang, t, fmtNumber, fmtDate } from '../../src/i18n/index.svelte';
 import pt from '../../src/i18n/pt.json';
 import en from '../../src/i18n/en.json';
-import es from '../../src/i18n/es.json';
+import { LANGS } from '../../src/domain/types';
 
 beforeEach(() => { i18n.lang = 'pt'; });
 
 describe('detectLang', () => {
   test('maps supported languages and falls back to en', () => {
     expect(detectLang(['pt-BR', 'en'])).toBe('pt');
-    expect(detectLang(['de-DE'])).toBe('en');
+    expect(detectLang(['sw-KE'])).toBe('en');
+    expect(detectLang(['zh-Hans-CN'])).toBe('zh');
+    expect(detectLang(['ar-EG'])).toBe('ar');
+    expect(detectLang(['MR'])).toBe('mr');
     expect(detectLang(['es-419'])).toBe('es');
-    expect(detectLang(['de', 'es'])).toBe('es');
+    expect(detectLang(['sw', 'es'])).toBe('es');
     expect(detectLang([])).toBe('en');
   });
 });
 
-test('all locales have identical key sets', () => {
-  expect(Object.keys(pt).sort()).toEqual(Object.keys(en).sort());
-  expect(Object.keys(es).sort()).toEqual(Object.keys(en).sort());
+const files = import.meta.glob<Record<string, string>>('../../src/i18n/*.json', { eager: true, import: 'default' });
+const read = (l: string): Record<string, string> => files[`../../src/i18n/${l}.json`];
+const PLURAL = /_(zero|one|two|few|many|other)$/;
+
+describe('locale files', () => {
+  test('one file per UI language', () => {
+    const names = Object.keys(files).map((f) => f.split('/').pop()!.slice(0, -5));
+    expect(names.sort()).toEqual([...LANGS].sort());
+  });
+  test.each(LANGS)('%s has every en key; only extra plural forms are allowed', (l) => {
+    const base = Object.keys(en);
+    const keys = Object.keys(read(l));
+    expect(base.filter((k) => !keys.includes(k))).toEqual([]);
+    const extra = keys.filter((k) => !(k in en));
+    expect(extra.filter((k) => !PLURAL.test(k) || !base.some((b) => b.replace(PLURAL, '') === k.replace(PLURAL, '')))).toEqual([]);
+  });
+});
+
+describe('lazy locales', () => {
+  test('switching loads the locale, and missing keys fall back to en', async () => {
+    vi.resetModules();
+    const fresh = await import('../../src/i18n/index.svelte');
+    fresh.i18n.lang = 'en';
+    expect(fresh.t('nav.settings')).toBe(en['nav.settings' as keyof typeof en]);
+    await fresh.setLang('pt');
+    expect(fresh.t('nav.settings')).toBe(pt['nav.settings' as keyof typeof pt]);
+    expect(fresh.t('nav.settings')).not.toBe(en['nav.settings' as keyof typeof en]);
+    expect(document.documentElement.lang).toBe('pt');
+    expect(document.documentElement.dir).toBe('ltr');
+    const loaded = (await import('../../src/i18n/pt.json')).default as Record<string, string>;
+    const saved = loaded['nav.settings'];
+    delete loaded['nav.settings'];
+    expect(fresh.t('nav.settings')).toBe(en['nav.settings' as keyof typeof en]);
+    loaded['nav.settings'] = saved;
+  });
+  test('right-to-left languages set dir', async () => {
+    await setLang('ar');
+    expect(document.documentElement.dir).toBe('rtl');
+    await setLang('ur');
+    expect(document.documentElement.dir).toBe('rtl');
+    await setLang('pt');
+    expect(document.documentElement.dir).toBe('ltr');
+  });
+  test('plural forms beyond one/other fall back to _other', async () => {
+    await setLang('ru');
+    const d = read('ru');
+    d['z.item_few'] = '{count} few'; d['z.item_other'] = '{count} other';
+    expect(t('z.item', { count: 3 })).toBe('3 few');
+    expect(t('z.item', { count: 5 })).toBe('5 other');
+    delete d['z.item_few']; delete d['z.item_other'];
+  });
 });
 
 describe('t', () => {

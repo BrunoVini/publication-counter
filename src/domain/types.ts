@@ -1,5 +1,7 @@
 export type WeightUnit = 'g' | 'kg' | 'lb' | 'oz';
-export type Lang = 'pt' | 'en' | 'es';
+/** UI languages; `en` is bundled, every other locale is lazy-loaded. */
+export const LANGS = ['pt', 'en', 'es', 'zh', 'hi', 'fr', 'ar', 'bn', 'ru', 'ur', 'id', 'de', 'ja', 'tr', 'mr'] as const;
+export type Lang = (typeof LANGS)[number];
 export type Theme = 'light' | 'dark' | 'system';
 /** Ascending by upToG; the last entry's upToG is the scale capacity. */
 export interface ScaleRange { upToG: number; resolutionG: number }

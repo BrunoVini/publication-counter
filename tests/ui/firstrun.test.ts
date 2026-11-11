@@ -40,8 +40,8 @@ describe('first run', () => {
 
   test('choosing English sets lang and unit persists', async () => {
     render(App);
-    await fireEvent.click(screen.getByRole('radio', { name: 'English' }));
-    expect(i18n.lang).toBe('en');
+    await fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } });
+    await waitFor(() => expect(i18n.lang).toBe('en'));
     expect(app.ds.settings.language).toBe('en');
     await fireEvent.click(screen.getByRole('radio', { name: 'oz' }));
     expect(app.ds.settings.unit).toBe('oz');
@@ -92,7 +92,8 @@ describe('first run', () => {
   test('choosing a language keeps a unit the user already picked', async () => {
     render(App);
     await fireEvent.click(screen.getByRole('radio', { name: 'oz' }));
-    await fireEvent.click(screen.getByRole('radio', { name: 'English' }));
+    await fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } });
+    await waitFor(() => expect(i18n.lang).toBe('en'));
     expect(app.ds.settings.unit).toBe('oz');
     expect((screen.getByRole<HTMLInputElement>('radio', { name: 'oz' })).checked).toBe(true);
   });
@@ -121,9 +122,8 @@ describe('first run', () => {
   test('the primary publication language is preselected from the UI language and saved', async () => {
     render(App);
     expect((await screen.findByRole<HTMLInputElement>('radio', { name: 'Português (Brasil)' })).checked).toBe(true);
-    await fireEvent.click(screen.getAllByRole('radio', { name: 'English' })[0]);
+    await fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } });
     await waitFor(() => expect(i18n.lang).toBe('en'));
-    await waitFor(() => expect(screen.getAllByRole('radio', { name: 'English' }).length).toBe(2));
     await fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(app.ds.settings.pubLanguage).toBe('E');
     expect(app.ds.settings.pubLanguages).toEqual([]);

@@ -42,5 +42,5 @@ export default defineConfig({
     }),
   ],
   build: { target: ['es2020', 'safari15'] },
-  test: { environment: 'jsdom', include: ['tests/**/*.test.ts'] },
+  test: { environment: 'jsdom', include: ['tests/**/*.test.ts'], setupFiles: ['tests/setup.ts'] },
 })

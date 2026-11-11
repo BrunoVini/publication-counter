@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { validateScale } from './calc';
-import type { Dataset } from './types';
+import { LANGS, type Dataset } from './types';
 
 export const CURRENT_FORMAT = 1;
 
@@ -31,7 +31,7 @@ const schema = v.strictObject({
     unit: v.picklist(['g', 'kg', 'lb', 'oz']),
     scale: v.nullable(v.array(v.strictObject({ upToG: posNum, resolutionG: posNum }))),
     theme: v.picklist(['light', 'dark', 'system']),
-    language: v.optional(v.picklist(['pt', 'en', 'es'])),
+    language: v.optional(v.picklist(LANGS)),
     pubLanguage: v.optional(id),
     pubLanguages: v.optional(v.pipe(v.array(id), v.maxLength(2000))),
     locationName: v.optional(text),
