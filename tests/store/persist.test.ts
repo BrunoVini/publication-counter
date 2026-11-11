@@ -1,10 +1,10 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createStore, set } from 'idb-keyval';
+import { createStore, get, set } from 'idb-keyval';
 
 vi.mock('idb-keyval', async (orig) => {
   const real = await orig<typeof import('idb-keyval')>();
-  return { ...real, set: vi.fn(real.set) };
+  return { ...real, set: vi.fn(real.set), get: vi.fn(real.get) };
 });
 
 import { listBackups, loadDataset, pushBackup, saveDataset, setStore } from '../../src/store/persist';
@@ -30,7 +30,8 @@ describe('persist', () => {
     setStore(store);
     await set('dataset', { junk: true }, store);
     expect(await loadDataset()).toBeNull();
-    expect((await listBackups())[0].reason).toBe('corrupt');
+    expect(await listBackups()).toEqual([]);
+    expect(await get('corrupt', store)).toEqual({ junk: true });
   });
 
   it('backups keep last 5', async () => {
@@ -62,6 +63,36 @@ describe('app', () => {
     expect(b[0].reason).toBe('import');
     expect(b[0].dataset.datasetId).toBe(prev);
     expect((await loadDataset())?.datasetId).toBe('next');
+  });
+
+  it('read error leaves stored data untouched and does not save', async () => {
+    vi.mocked(set).mockClear();
+    vi.mocked(get).mockRejectedValueOnce(new Error('read'));
+    await init();
+    expect(app.saveState).toBe('unavailable');
+    act(() => 0);
+    await flushSaves();
+    expect(set).not.toHaveBeenCalled();
+    expect(app.saveState).toBe('unavailable');
+  });
+
+  it('replaceDataset does not swap when the backup fails', async () => {
+    await init();
+    const prev = app.ds.datasetId;
+    vi.mocked(set).mockRejectedValueOnce(new Error('quota'));
+    await expect(replaceDataset(emptyDataset('next'), 'import')).rejects.toBe('backupFailed');
+    expect(app.ds.datasetId).toBe(prev);
+  });
+
+  it('concurrent backups are not dropped and a good save recovers from unavailable', async () => {
+    await init();
+    vi.mocked(set).mockRejectedValueOnce(new Error('quota'));
+    act(() => 0);
+    await flushSaves();
+    expect(app.saveState).toBe('unavailable');
+    await Promise.all([replaceDataset(emptyDataset('a'), 'r1'), replaceDataset(emptyDataset('b'), 'r2')]);
+    expect(await listBackups()).toHaveLength(2);
+    expect(app.saveState).toBe('saved');
   });
 
   it('save failure sets unavailable and keeps data in memory', async () => {

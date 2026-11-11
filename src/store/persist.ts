@@ -14,12 +14,14 @@ export async function listBackups(): Promise<Backup[]> {
   try { return (await get<Backup[]>('backups', kv())) ?? []; } catch { return []; }
 }
 
-export async function pushBackup(ds: unknown, reason: string): Promise<void> {
+/** Resolves false when the backup could not be written. */
+export async function pushBackup(ds: Dataset, reason: string): Promise<boolean> {
   try {
-    const next = [{ savedAt: new Date().toISOString(), reason, dataset: ds as Dataset },
-      ...(await listBackups())].slice(0, MAX_BACKUPS);
+    const next = [{ savedAt: new Date().toISOString(), reason, dataset: ds },
+      ...(await get<Backup[]>('backups', kv()) ?? [])].slice(0, MAX_BACKUPS);
     await set('backups', JSON.parse(JSON.stringify(next)), kv());
-  } catch { /* NOTE: a failed backup must never block the caller */ }
+    return true;
+  } catch { return false; }
 }
 
 export async function loadDataset(): Promise<Dataset | null> {
@@ -27,7 +29,8 @@ export async function loadDataset(): Promise<Dataset | null> {
   if (raw == null) return null;
   const r = parseDataset(JSON.stringify(raw));
   if (r.ok) return r.dataset;
-  await pushBackup(raw, 'corrupt');
+  // NOTE: single slot, newest overwrites; kept apart so `backups` only holds valid datasets.
+  try { await set('corrupt', raw, kv()); } catch { /* best effort */ }
   return null;
 }
 
