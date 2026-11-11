@@ -3,6 +3,7 @@
   import { act, app, replaceDataset, wipeDevice } from '../../store/app.svelte';
   import { getCorrupt, listBackups, type Backup } from '../../store/persist';
   import { fmtDate, fmtNumber, i18n, t } from '../../i18n/index.svelte';
+  import { pubLanguageOf } from '../../domain/dataset';
   import { exportFileName, parseDataset, serializeDataset } from '../../domain/file';
   import { clean, localDate } from '../../domain/text';
   import { fromGrams } from '../../domain/units';
@@ -38,19 +39,21 @@
   const refresh = async () => { backups = await listBackups(); corrupt = await getCorrupt(); };
   onMount(refresh);
 
-  function chooseTheme(th: Theme) { act((ds) => { ds.settings.theme = th; }); applyTheme(th); }
-  function chooseLang(l: Lang) { i18n.lang = l; act((ds) => { ds.settings.language = l; }); }
+  // NOTE: old datasets lack pubLanguage; the displayed default is persisted with the first settings save.
+  const save = (fn: (ds: Dataset) => void) => act((ds) => { ds.settings.pubLanguage ||= pubLanguageOf(ds.settings, i18n.lang); fn(ds); });
+  function chooseTheme(th: Theme) { save((ds) => { ds.settings.theme = th; }); applyTheme(th); }
+  function chooseLang(l: Lang) { save((ds) => { ds.settings.language = l; }); i18n.lang = l; }
   function choosePrimary(c: string) {
-    act((ds) => { ds.settings.pubLanguage = c; ds.settings.pubLanguages = (ds.settings.pubLanguages ?? []).filter((x) => x !== c); });
+    save((ds) => { ds.settings.pubLanguage = c; ds.settings.pubLanguages = (ds.settings.pubLanguages ?? []).filter((x) => x !== c); });
   }
-  function chooseOthers(v: string[]) { act((ds) => { ds.settings.pubLanguages = v; }); }
-  function chooseUnit(u: WeightUnit) { act((ds) => { ds.settings.unit = u; }); }
+  function chooseOthers(v: string[]) { save((ds) => { ds.settings.pubLanguages = v; }); }
+  function chooseUnit(u: WeightUnit) { save((ds) => { ds.settings.unit = u; }); }
   function saveLocation(e: Event) {
     const v = clean((e.currentTarget as HTMLInputElement).value);
-    act((ds) => { ds.settings.locationName = v || undefined; });
+    save((ds) => { ds.settings.locationName = v || undefined; });
   }
-  function saveScale(scale: ScaleRange[]) { act((ds) => { ds.settings.scale = scale; }); editingScale = false; }
-  function clearScale() { confirm = null; act((ds) => { ds.settings.scale = null; }); }
+  function saveScale(scale: ScaleRange[]) { save((ds) => { ds.settings.scale = scale; }); editingScale = false; }
+  function clearScale() { confirm = null; save((ds) => { ds.settings.scale = null; }); }
 
   async function handover() {
     try {
@@ -125,8 +128,9 @@
 
     <section class="stack">
       <h2>{t('set.weighing')}</h2>
+      <p class="muted">{t('form.required')}</p>
       <fieldset>
-        <legend>{t('set.unit')}</legend>
+        <legend>{t('set.unit')} <span aria-hidden="true">*</span></legend>
         {#each units as u (u)}
           <label><input type="radio" name="unit" checked={settings.unit === u} onchange={() => chooseUnit(u)} /> {u}</label>
         {/each}
@@ -157,8 +161,8 @@
     <section class="stack">
       <h2>{t('set.pubLangs')}</h2>
       <p class="muted">{t('form.required')}</p>
-      <LanguagePicker mode="single" required legend={t('set.pubLanguage')} value={settings.pubLanguage ?? ''} onchange={choosePrimary} />
-      <LanguagePicker mode="multi" legend={t('set.pubLanguages')} value={(settings.pubLanguages ?? []).filter((c) => c !== settings.pubLanguage)} onchange={chooseOthers} />
+      <LanguagePicker mode="single" required legend={t('set.pubLanguage')} value={pubLanguageOf(settings, i18n.lang)} onchange={choosePrimary} />
+      <LanguagePicker mode="multi" legend={t('set.pubLanguages')} value={(settings.pubLanguages ?? []).filter((c) => c !== pubLanguageOf(settings, i18n.lang))} onchange={chooseOthers} />
     </section>
 
     <section class="stack">

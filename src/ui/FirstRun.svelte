@@ -4,14 +4,13 @@
   import type { Lang, WeightUnit } from '../domain/types';
   import { openPubcountText, pickTextFile } from './shared/fileio';
   import { isIosBrowser } from './shared/platform';
-  import { languageEntry, languagesLoaded, loadLanguages } from '../domain/languages.svelte';
+  import { DEFAULT_PUB_LANGUAGE } from '../domain/dataset';
+  import { languagesLoaded, loadLanguages } from '../domain/languages.svelte';
   import LanguagePicker from './shared/LanguagePicker.svelte';
 
   const langs: { code: Lang; name: string }[] = [
     { code: 'pt', name: 'Português' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
   ];
-  // Codes in the public languages list; Portuguese maps to the Brazilian variant.
-  const defaultPub: Record<Lang, string> = { pt: 'T', en: 'E', es: 'S' };
   const units: WeightUnit[] = ['g', 'kg', 'lb', 'oz'];
 
   // NOTE: simple heuristic: pounds only for US English devices, kilograms everywhere else.
@@ -23,14 +22,13 @@
   let step = $state<1 | 2 | 3>(1);
   let unit = $state<WeightUnit>(defaultUnit());
   let error = $state('');
-  let primary = $state('');
+  let primary = $state(DEFAULT_PUB_LANGUAGE[i18n.lang]);
   let others = $state<string[]>([]);
   let primaryTouched = false;
   void loadLanguages();
-  // NOTE: the preselection only applies once the list is loaded and knows the code, so an unknown code is never stored.
+  // NOTE: the code is preselected right away (the codes are constants); only its label needs the list.
   $effect(() => {
-    const code = defaultPub[i18n.lang];
-    if (!primaryTouched && languagesLoaded() && languageEntry(code)) primary = code;
+    if (!primaryTouched) primary = DEFAULT_PUB_LANGUAGE[i18n.lang];
   });
   // NOTE: the language default only applies while the user has not picked a unit.
   let unitTouched = false;
