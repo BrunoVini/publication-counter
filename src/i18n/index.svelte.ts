@@ -38,6 +38,10 @@ export function fmtNumber(n: number, maxFractionDigits = 3): string {
   return new Intl.NumberFormat(locales[i18n.lang], { maximumFractionDigits: maxFractionDigits }).format(n);
 }
 
+export function fmtDateTime(iso: string): string {
+  return `${fmtDate(iso)} ${new Date(iso).toLocaleTimeString(i18n.lang, { hour: '2-digit', minute: '2-digit' })}`;
+}
+
 export function fmtDate(iso: string): string {
   try {
     // NOTE: date-only strings parse as UTC midnight, so format in UTC to avoid a one-day shift.

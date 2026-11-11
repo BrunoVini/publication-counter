@@ -38,14 +38,14 @@ describe('shell', () => {
     render(App);
     expect(screen.getByRole('alert').textContent).toMatch(/not being saved/i);
     expect(screen.getByText(/not saved/i)).toBeTruthy();
-    // NOTE: only the banner announces while it is shown.
-    expect(screen.queryByRole('status')).toBeNull();
+    // NOTE: only the banner announces the save state while it is shown (the drive status region stays empty).
+    expect(screen.getAllByRole('status').every((e) => !/saved|saving/i.test(e.textContent ?? ''))).toBe(true);
   });
 
   test('no banner while saved; status text is its own name', () => {
     render(App);
     expect(screen.queryByRole('alert')).toBeNull();
-    const st = screen.getByRole('status');
+    const st = screen.getAllByRole('status').find((e) => /saved/i.test(e.textContent ?? ''))!;
     expect(st.hasAttribute('aria-label')).toBe(false);
     expect(st.textContent).toMatch(/saved/i);
   });

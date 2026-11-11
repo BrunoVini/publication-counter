@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fmtDate, i18n, t } from '../../i18n/index.svelte';
+  import { fmtDateTime, t } from '../../i18n/index.svelte';
   import { drive, resolveConflict, type Summary } from '../../store/sync.svelte';
 
   let dlg: HTMLDialogElement;
@@ -10,15 +10,16 @@
   });
 
   const changed = (s: Summary) =>
-    s.modifiedAt ? `${fmtDate(s.modifiedAt)} ${new Date(s.modifiedAt).toLocaleTimeString(i18n.lang, { hour: '2-digit', minute: '2-digit' })}` : t('drive.conflict.unknown');
+    s.modifiedAt ? fmtDateTime(s.modifiedAt) : t('drive.conflict.unknown');
   const cols = $derived(drive.conflict ? [
     { name: t('drive.conflict.device'), s: drive.conflict.local },
     { name: t('drive.conflict.drive'), s: drive.conflict.remoteSummary },
   ] : []);
 </script>
 
-<!-- NOTE: Esc and backdrop clicks are ignored on purpose; the user must pick a version. -->
-<dialog bind:this={dlg} aria-labelledby="cf-title" oncancel={(e) => e.preventDefault()}>
+<!-- NOTE: Esc and backdrop clicks are ignored on purpose; onclose reopens it when a second Esc or the Android back button closes it anyway. -->
+<dialog bind:this={dlg} aria-labelledby="cf-title" oncancel={(e) => e.preventDefault()}
+  onclose={() => { if (open) dlg.showModal(); }}>
   <div class="content">
     <h2 id="cf-title">{t('drive.conflict.title')}</h2>
     <p>{t('drive.conflict.intro')}</p>

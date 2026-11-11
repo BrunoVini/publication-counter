@@ -37,9 +37,9 @@
         <span aria-hidden="true">{app.saveState === 'saved' ? '✓' : app.saveState === 'saving' ? '…' : '!'}</span>
         {t(`save.${app.saveState}`)}
       </span>
-      {#if drive.status !== 'off' && drive.status !== 'notConfigured'}
-        <span class="save" role="status" aria-live="polite">{t(`drive.status.${drive.status}`)}</span>
-      {/if}
+      <span class="save" role="status" aria-live="polite">
+        {#if drive.status !== 'off' && drive.status !== 'notConfigured'}{t(`drive.status.${drive.status}`)}{/if}
+      </span>
     </header>
 
     {#if app.saveState === 'unavailable'}

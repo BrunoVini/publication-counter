@@ -67,6 +67,23 @@ describe('CloudSection', () => {
     expect(m.disconnect).toHaveBeenCalledTimes(1);
   });
 
+  test('back up now is disabled while syncing', () => {
+    m.drive.status = 'syncing';
+    render(CloudSection);
+    expect((screen.getByRole('button', { name: 'Back up now' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test('expired and error offer disconnect', () => {
+    m.drive.status = 'expired';
+    const r = render(CloudSection);
+    expect(screen.getByRole('button', { name: 'Disconnect' })).toBeTruthy();
+    r.unmount();
+    m.drive.status = 'error';
+    render(CloudSection);
+    expect(screen.getByRole('button', { name: 'Disconnect' })).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   test('error shows message and try again', async () => {
     m.drive.status = 'error';
     m.drive.error = 'Boom';
@@ -108,5 +125,27 @@ describe('ConflictDialog', () => {
     expect(ev.defaultPrevented).toBe(true);
     expect(m.resolveConflict).not.toHaveBeenCalled();
     expect(dlg.hasAttribute('open')).toBe(true);
+  });
+
+  test('conflict dialog reopens when closed while the conflict is pending', async () => {
+    m.drive.status = 'conflict';
+    m.drive.conflict = conflict;
+    const { container } = render(ConflictDialog);
+    const dlg = container.querySelector('dialog')!;
+    dlg.removeAttribute('open');
+    await fireEvent(dlg, new Event('close'));
+    expect(dlg.hasAttribute('open')).toBe(true);
+  });
+});
+
+describe('App status', () => {
+  test('top-bar drive status text renders', async () => {
+    const { app } = await import('../../src/store/app.svelte');
+    const { emptyDataset } = await import('../../src/domain/dataset');
+    const App = (await import('../../src/ui/App.svelte')).default;
+    app.ds = emptyDataset('cur', { firstRunDone: true });
+    m.drive.status = 'syncing';
+    render(App);
+    expect(screen.getByText('Drive: backing up')).toBeTruthy();
   });
 });
