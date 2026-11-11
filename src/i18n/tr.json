@@ -335,5 +335,6 @@
   "pubs.delete.message": "Listeden kalkar ve gelecekteki sayımlarda görünmez. Tamamlanmış sayımlar adını ve miktarlarını korur. Bu işlem geri alınamaz. Yalnızca bir süre gizlemek için Arşivle'yi kullanın.",
   "pubs.delete.openWarn": "Bu sayımda buna ait kayıtlar kaybolacak.",
   "pubs.delete.confirm": "Sil",
-  "pubs.sampleOpenNote": "Açık sayım, zaten kayıtları olduğu için kendi adet ağırlığını korur. Gerekirse orada değiştirin."
+  "pubs.sampleOpenNote": "Açık sayım, zaten kayıtları olduğu için kendi adet ağırlığını korur. Gerekirse orada değiştirin.",
+  "set.contribute": "PubCount açık bir projedir. Çeviri, fikir veya kod konusunda yardım etmek ister misin? {link} üzerinden göz at."
 }

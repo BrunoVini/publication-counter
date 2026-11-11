@@ -335,5 +335,6 @@
   "pubs.delete.message": "Publikasi ini keluar dari daftar dan tidak akan muncul di hitungan berikutnya. Hitungan yang sudah selesai tetap menyimpan nama dan jumlahnya. Ini tidak dapat dibatalkan. Untuk menyembunyikannya sementara, gunakan Arsipkan.",
   "pubs.delete.openWarn": "Entri hitungan ini untuk publikasi tersebut akan hilang.",
   "pubs.delete.confirm": "Hapus",
-  "pubs.sampleOpenNote": "Hitungan yang sedang terbuka memakai berat satuannya sendiri, karena sudah ada entri. Ubah di sana jika perlu."
+  "pubs.sampleOpenNote": "Hitungan yang sedang terbuka memakai berat satuannya sendiri, karena sudah ada entri. Ubah di sana jika perlu.",
+  "set.contribute": "PubCount adalah proyek terbuka. Ingin membantu dengan terjemahan, ide, atau kode? Lihat di {link}."
 }

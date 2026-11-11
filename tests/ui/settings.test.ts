@@ -73,6 +73,15 @@ describe('settings screen', () => {
     expect(document.documentElement.dataset.theme).toBeUndefined();
   });
 
+  test('ends with the open-project note linking to GitHub', () => {
+    render(SettingsScreen);
+    const link = screen.getByRole<HTMLAnchorElement>('link', { name: 'GitHub' });
+    expect(link.href).toBe('https://github.com/BrunoVini/publication-counter');
+    expect(link.target).toBe('_blank');
+    expect(link.rel).toBe('noopener');
+    expect(link.parentElement?.textContent).toBe('PubCount is an open project. Want to help with translations, ideas or code? See it on GitHub.');
+  });
+
   test('language switch updates i18n and settings', async () => {
     render(SettingsScreen);
     await fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'es' } });

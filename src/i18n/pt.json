@@ -335,5 +335,6 @@
   "pubs.delete.message": "Ela sai da lista e não aparece nas próximas contagens. As contagens finalizadas mantêm o nome e as quantidades. Não dá para desfazer. Se quiser só escondê-la por um tempo, use Arquivar.",
   "pubs.delete.openWarn": "Os lançamentos desta contagem para ela serão perdidos.",
   "pubs.delete.confirm": "Apagar",
-  "pubs.sampleOpenNote": "A contagem aberta mantém o próprio peso unitário, pois já tem lançamentos. Altere-o lá, se precisar."
+  "pubs.sampleOpenNote": "A contagem aberta mantém o próprio peso unitário, pois já tem lançamentos. Altere-o lá, se precisar.",
+  "set.contribute": "O PubCount é um projeto aberto. Quer ajudar com traduções, ideias ou código? Veja no {link}."
 }

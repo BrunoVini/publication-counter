@@ -335,5 +335,6 @@
   "pubs.delete.message": "Sie verschwindet aus der Liste und erscheint nicht mehr in künftigen Zählungen. Abgeschlossene Zählungen behalten ihren Namen und ihre Mengen. Das lässt sich nicht rückgängig machen. Um sie nur vorübergehend auszublenden, nutzen Sie „Archivieren“.",
   "pubs.delete.openWarn": "Die Einträge dieser Zählung dafür gehen verloren.",
   "pubs.delete.confirm": "Löschen",
-  "pubs.sampleOpenNote": "Die offene Zählung behält ihr eigenes Stückgewicht, weil sie bereits Einträge hat. Ändern Sie es dort, falls nötig."
+  "pubs.sampleOpenNote": "Die offene Zählung behält ihr eigenes Stückgewicht, weil sie bereits Einträge hat. Ändern Sie es dort, falls nötig.",
+  "set.contribute": "PubCount ist ein offenes Projekt. Möchtest du bei Übersetzungen, Ideen oder Code helfen? Schau auf {link} vorbei."
 }

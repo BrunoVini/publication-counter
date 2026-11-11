@@ -337,5 +337,6 @@
   "pubs.delete.message": "Elle quitte la liste et n’apparaîtra plus dans les comptages futurs. Les comptages terminés gardent son nom et ses quantités. Cette action est irréversible. Pour simplement la masquer un moment, utilisez Archiver.",
   "pubs.delete.openWarn": "Les entrées de ce comptage pour cette publication seront perdues.",
   "pubs.delete.confirm": "Supprimer",
-  "pubs.sampleOpenNote": "Le comptage en cours garde son propre poids d’unité, car il contient déjà des entrées. Modifiez-le là-bas si besoin."
+  "pubs.sampleOpenNote": "Le comptage en cours garde son propre poids d’unité, car il contient déjà des entrées. Modifiez-le là-bas si besoin.",
+  "set.contribute": "PubCount est un projet ouvert. Envie d’aider avec des traductions, des idées ou du code ? Rendez-vous sur {link}."
 }

@@ -335,5 +335,6 @@
   "pubs.delete.message": "Sale de la lista y no aparecerá en los próximos conteos. Los conteos finalizados conservan el nombre y las cantidades. No se puede deshacer. Si solo quieres ocultarla por un tiempo, usa Archivar.",
   "pubs.delete.openWarn": "Los registros de este conteo para ella se perderán.",
   "pubs.delete.confirm": "Borrar",
-  "pubs.sampleOpenNote": "El conteo abierto conserva su propio peso unitario, porque ya tiene registros. Cámbialo allí si hace falta."
+  "pubs.sampleOpenNote": "El conteo abierto conserva su propio peso unitario, porque ya tiene registros. Cámbialo allí si hace falta.",
+  "set.contribute": "PubCount es un proyecto abierto. ¿Quieres ayudar con traducciones, ideas o código? Míralo en {link}."
 }

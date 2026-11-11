@@ -113,6 +113,10 @@
       <button type="button" onclick={() => (view = 'how')}><Icon name="info" /> {t('set.howLink')}</button>
       <a class="btn" href="/privacy.html" target="_blank" rel="noopener">{t('set.privacyLink')}</a>
     </div>
+
+    <!-- NOTE: the sentence is translated whole; the placeholder marks where the link goes in each language. -->
+    {@const [before, after] = t('set.contribute', { link: '\u0000' }).split('\u0000')}
+    <p class="muted note">{before}<a href="https://github.com/BrunoVini/publication-counter" target="_blank" rel="noopener">GitHub</a>{after}</p>
   {/if}
 </div>
 
@@ -121,4 +125,5 @@
 <style>
   .col { max-width: 560px; margin: 0 auto; display: grid; gap: var(--sp-4); }
   .btn-row > * { flex: 1 1 auto; }
+  .note { font-size: var(--fs-sm); margin: 0; }
 </style>

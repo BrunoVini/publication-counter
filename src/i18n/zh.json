@@ -335,5 +335,6 @@
   "pubs.delete.message": "它会从列表中消失，以后的清点中也不会出现。已完成的清点会保留它的名称和数量。此操作无法撤销。如果只是想暂时隐藏它，请使用“归档”。",
   "pubs.delete.openWarn": "这次清点中关于它的记录将会丢失。",
   "pubs.delete.confirm": "删除",
-  "pubs.sampleOpenNote": "进行中的清点保留它自己的单个重量，因为已经有记录了。如需更改，请在那里修改。"
+  "pubs.sampleOpenNote": "进行中的清点保留它自己的单个重量，因为已经有记录了。如需更改，请在那里修改。",
+  "set.contribute": "PubCount 是一个开放项目。想帮忙翻译、提出想法或贡献代码吗？欢迎到 {link} 查看。"
 }
