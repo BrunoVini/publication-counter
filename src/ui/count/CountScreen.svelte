@@ -8,6 +8,7 @@
   import type { CountItem } from '../../domain/types';
   import { showToast } from '../shared/Toast.svelte';
   import ItemPanel from './ItemPanel.svelte';
+  import Icon from '../shared/Icon.svelte';
 
   void loadLanguages();
   const langName = (code: string) => languageName(code, i18n.lang);
@@ -49,7 +50,7 @@
     }
   }
   const isDone = (item: CountItem) => item.zero || item.entries.length > 0;
-  const icons = { approx: '✓', zero: '○', none: '–', attention: '!' } as const;
+  const icons = { approx: 'check', zero: 'check', none: 'minus', attention: 'warn' } as const;
 
   const rows = $derived.by(() => {
     if (!count) return [];
@@ -120,29 +121,36 @@
 <svelte:window onkeydown={onkey} />
 
 {#if !count}
-  <button type="button" class="primary" onclick={begin}>{t('count.new')}</button>
-  <h2>{t('count.history')}</h2>
-  {#if history.length === 0}
-    <p class="muted">{t('count.history.empty')}</p>
-  {:else}
-    <ul class="list">
-      {#each history as c (c.id)}
-        <li>
-          <button type="button" class="row" onclick={() => (app.summaryCountId = c.id)}>
-            <strong>{fmtDate(c.startedAt)}</strong>
-            <span class="muted">{c.counter} · {t('count.items', { count: c.items.length })}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <div class="stack home">
+    <button type="button" class="primary big wide" onclick={begin}><Icon name="plus" size={24} /> {t('count.new')}</button>
+    <h2 class="sec">{t('count.history')}</h2>
+    {#if history.length === 0}
+      <p class="muted">{t('count.history.empty')}</p>
+    {:else}
+      <ul class="list">
+        {#each history as c (c.id)}
+          <li>
+            <button type="button" class="row" onclick={() => (app.summaryCountId = c.id)}>
+              <span class="main">
+                <strong>{fmtDate(c.startedAt)}</strong>
+                <span class="sub">{c.counter} · {t('count.items', { count: c.items.length })}</span>
+              </span>
+              <Icon name="chevron" />
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </div>
 {:else}
   <div class="layout" class:desktop>
     <div class="left">
-      <p class="head"><strong>{fmtDate(count.startedAt)}</strong> · {count.counter} · <span>{t('count.progress', { done, total: count.items.length })}</span></p>
+      <p class="head"><strong>{fmtDate(count.startedAt)}</strong> · {count.counter} · <span class="prog">{t('count.progress', { done, total: count.items.length })}</span></p>
+      <!-- NOTE: decorative; the same progress is in the text above. -->
+      <div class="meter" aria-hidden="true"><i style:width="{count.items.length ? (done / count.items.length) * 100 : 0}%"></i></div>
       <label class="field">
         <span>{t('count.search')}</span>
-        <input type="search" bind:this={search} bind:value={query} autocomplete="off" />
+        <span class="search"><Icon name="search" /><input type="search" bind:this={search} bind:value={query} autocomplete="off" /></span>
       </label>
       <label class="check"><input type="checkbox" bind:checked={app.onlyNotCounted} /> {t('count.onlyUncounted')}</label>
 
@@ -150,7 +158,7 @@
         <p class="muted">{t('count.noPubs')}</p>
       {:else if query.trim() && rows.length === 0}
         <p class="muted">{t('count.noMatch', { text: query.trim() })}</p>
-        <button type="button" class="primary" onclick={createFromSearch}>{t('count.create', { text: query.trim() })}</button>
+        <button type="button" class="primary wide" onclick={createFromSearch}><Icon name="plus" /> {t('count.create', { text: query.trim() })}</button>
       {:else if visible.length === 0}
         <p class="muted">{t('count.allCounted')}</p>
       {/if}
@@ -158,15 +166,16 @@
       <ul class="list" aria-label={t('count.list')}>
         {#each visible as { item, pub, status } (pub.id)}
           <li>
-            <button type="button" class="row" class:selected={selectedId === pub.id} aria-expanded={app.openItemId === pub.id} onclick={() => toggle(pub.id)}>
+            <button type="button" class="row" class:selected={selectedId === pub.id} class:open={app.openItemId === pub.id} aria-expanded={app.openItemId === pub.id} onclick={() => toggle(pub.id)}>
               <span class="main">
                 <strong>{pub.name}</strong>
-                <span class="muted">{[langName(pub.language), pub.variant].filter(Boolean).join(' · ')}</span>
+                <span class="sub">{[langName(pub.language), pub.variant].filter(Boolean).join(' · ')}</span>
               </span>
               <span class="status {status.kind}">
-                <span aria-hidden="true">{icons[status.kind]}</span>
+                <Icon name={icons[status.kind]} size={18} />
                 {status.kind === 'approx' ? t('count.status.approx', { n: fmtNumber(status.n ?? 0) }) : t(`count.status.${status.kind}`)}
               </span>
+              <Icon name={app.openItemId === pub.id ? 'up' : 'down'} />
             </button>
             {#if !desktop && app.openItemId === pub.id}
               <ItemPanel countId={count.id} pubId={pub.id} />
@@ -175,7 +184,7 @@
         {/each}
       </ul>
       <div class="sticky">
-        <button type="button" class="primary" onclick={() => (app.summaryCountId = count.id)}>{t('count.summary')}</button>
+        <button type="button" class="primary big wide" onclick={() => (app.summaryCountId = count.id)}>{t('count.summary')} <Icon name="chevron" /></button>
       </div>
     </div>
     {#if desktop && app.openItemId}
@@ -203,27 +212,21 @@
 {/if}
 
 <style>
-  button, input[type='search'], dialog input:not([type]) { min-height: 44px; font-size: 16px; }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .muted { color: var(--muted); }
-  .err { color: var(--bad); }
-  .field { display: grid; gap: 4px; margin: 8px 0; }
-  .field input { padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
-  .check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
-  .check input { width: 24px; height: 24px; }
-  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-  .row { width: 100%; min-height: 56px; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; }
-  .row.selected { outline: 2px solid var(--accent); }
-  .main { display: grid; }
-  .status { white-space: nowrap; font-weight: 600; }
+  .home { max-width: 560px; }
+  .left { display: grid; gap: var(--sp-2); align-content: start; }
+  .head .prog { font-weight: 700; }
+  .meter { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+  .meter i { display: block; height: 100%; background: var(--accent); }
+  .row.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .row.open { background: var(--accent-soft); }
+  .row.open .main strong { font-weight: 700; }
+  /* NOTE: each status has its own icon and wording; the colour only reinforces it. */
+  .status { display: inline-flex; align-items: center; gap: var(--sp-1); white-space: nowrap; font-weight: 700; }
+  .status.approx, .status.zero { color: var(--accent); font-size: var(--fs-lg); }
+  .status.none { color: var(--todo); font-weight: 600; }
   .status.attention { color: var(--bad); }
-  .sticky { position: sticky; bottom: 72px; padding: 8px 0; background: var(--bg); }
-  .layout.desktop { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
-  .right { position: sticky; top: 16px; }
-  dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; max-width: 380px; padding: 0; }
-  .content { padding: 16px; }
-  .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .sticky { position: sticky; bottom: var(--nav-h); padding: var(--sp-2) 0; background: var(--bg); }
+  .layout.desktop { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--sp-4); align-items: start; }
+  .right { position: sticky; top: var(--sp-4); }
   @media (min-width: 900px) { .sticky { bottom: 0; } }
 </style>

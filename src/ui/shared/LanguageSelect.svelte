@@ -48,7 +48,7 @@
   <!-- NOTE: the dialog sits inside the publication form, so Enter in the search box must not submit it. -->
   <div class="content" role="presentation" onkeydown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') e.preventDefault(); }}>
     {#if opened}<LanguagePicker mode="single" legend={t('lang.otherTitle')} value={choice} onchange={(v) => (choice = v)} />{/if}
-    <label class="opt"><input type="checkbox" bind:checked={remember} /> {t('lang.addToMine')}</label>
+    <label class="check"><input type="checkbox" bind:checked={remember} /> {t('lang.addToMine')}</label>
     <div class="actions">
       <button type="button" onclick={() => dlg.close()}>{t('dialog.cancel')}</button>
       <button type="button" class="primary" disabled={!choice} onclick={use}>{t('lang.use')}</button>
@@ -57,13 +57,5 @@
 </dialog>
 
 <style>
-  select { min-height: 44px; font-size: 16px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
-  dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; width: min(520px, 94vw); padding: 0; }
-  .content { padding: 16px; display: grid; gap: 12px; }
-  .opt { display: flex; align-items: center; gap: 8px; min-height: 44px; }
-  .opt input { width: 24px; height: 24px; }
-  .actions { display: flex; justify-content: flex-end; gap: 8px; }
-  button { min-height: 44px; padding: 0 16px; font-size: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
-  button:disabled { opacity: 0.5; }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+  dialog { width: min(520px, calc(100vw - 2 * var(--sp-4))); }
 </style>

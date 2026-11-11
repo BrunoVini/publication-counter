@@ -5,6 +5,7 @@
   import { validateScale } from '../../domain/calc';
   import { fromGrams, parseDecimal, toGrams } from '../../domain/units';
   import type { ScaleRange } from '../../domain/types';
+  import Icon from '../shared/Icon.svelte';
 
   let { scale, onsave, oncancel, cancelLabel }: {
     scale: ScaleRange[];
@@ -42,9 +43,9 @@
   {#each rows as row, i (i)}
     <fieldset>
       <legend>{t('scale.row', { n: i + 1 })}</legend>
-      <label>{t('scale.upTo', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={row.upTo} /></label>
-      <label>{t('scale.resolution', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={row.res} /></label>
-      <button type="button" aria-label={t('scale.removeRow', { n: i + 1 })} onclick={() => rows.splice(i, 1)}>×</button>
+      <label class="field">{t('scale.upTo', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={row.upTo} /></label>
+      <label class="field">{t('scale.resolution', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={row.res} /></label>
+      <button type="button" class="icon-btn danger" aria-label={t('scale.removeRow', { n: i + 1 })} onclick={() => rows.splice(i, 1)}><Icon name="trash" size={22} /></button>
     </fieldset>
   {/each}
   <button type="button" onclick={() => rows.push({ upTo: '', res: '' })}>{t('scale.addRow')}</button>
@@ -56,14 +57,8 @@
 </form>
 
 <style>
-  .scale { display: grid; gap: 8px; }
-  h3 { margin: 0; }
-  fieldset { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; border: 1px solid var(--border); border-radius: 10px; }
-  label { display: grid; gap: 2px; flex: 1; min-width: 120px; }
-  input { min-height: 44px; font-size: 1rem; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .actions { display: flex; justify-content: flex-end; gap: 8px; }
-  .muted { margin: 0; color: var(--muted); }
-  .bad { margin: 0; color: var(--bad); }
+  .scale { display: grid; gap: var(--sp-2); }
+  fieldset { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: end; }
+  .field { flex: 1; min-width: 120px; grid-template-columns: auto 1fr; justify-content: start; }
+  .field input { grid-column: 1 / -1; }
 </style>

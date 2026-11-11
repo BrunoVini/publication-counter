@@ -23,24 +23,17 @@
     <h2 id="cd-title">{title}</h2>
     <p>{message}</p>
     {#if requireText}
-      <label class="type">{t('dialog.typeToConfirm', { word: requireText })}
+      <label class="field">{t('dialog.typeToConfirm', { word: requireText })}
         <input type="text" bind:value={typed} autocomplete="off" autocapitalize="off" spellcheck="false" />
       </label>
     {/if}
     <div class="actions">
       <button type="button" onclick={oncancel}>{t('dialog.cancel')}</button>
-      <button type="button" class:danger disabled={!ok} onclick={onconfirm}>{confirmLabel}</button>
+      <button type="button" class={danger ? 'danger solid' : 'primary'} disabled={!ok} onclick={onconfirm}>{confirmLabel}</button>
     </div>
   </div>
 </dialog>
 
 <style>
-  dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; max-width: 380px; padding: 0; }
-  .content { padding: 16px; }
-  .actions { display: flex; justify-content: flex-end; gap: 8px; }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .type { display: grid; gap: 4px; margin: 8px 0; }
-  input { min-height: 44px; font-size: 1rem; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-  button:disabled { opacity: 0.5; }
-  .danger { background: var(--bad); color: var(--bg); border-color: var(--bad); font-weight: 700; }
+  .actions { margin-top: var(--sp-1); }
 </style>

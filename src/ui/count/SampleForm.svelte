@@ -65,8 +65,8 @@
   <form class="form" onsubmit={(e) => { e.preventDefault(); save(); }}>
     <h3>{t('sample.title')}</h3>
     <p class="muted">{t('form.required')}</p>
-    <label>{t('sample.units')} <span aria-hidden="true">*</span><input type="text" inputmode="numeric" aria-required="true" bind:value={unitsText} /></label>
-    <label>{t('sample.weight', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={weightText} /></label>
+    <label class="field">{t('sample.units')} <span aria-hidden="true">*</span><input type="text" inputmode="numeric" aria-required="true" bind:value={unitsText} /></label>
+    <label class="field">{t('sample.weight', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={weightText} /></label>
     <p class="advice" aria-live="polite">
       {#if advice}{advice.ok ? t('sample.adviceOk') : t('sample.advice', { n: advice.suggestedUnits })}{/if}
     </p>
@@ -77,7 +77,7 @@
     </div>
     {#if sources.length > 0}
       <div class="copy">
-        <label>{t('sample.copy.label')}
+        <label class="field">{t('sample.copy.label')}
           <select bind:value={copyFrom}>
             <option value="">{t('sample.copy.choose')}</option>
             {#each sources as p (p.id)}<option value={p.id}>{p.name}{p.variant ? ` (${p.variant})` : ''}</option>{/each}
@@ -90,16 +90,11 @@
 {/if}
 
 <style>
-  .form { display: grid; gap: 8px; }
-  h3 { margin: 0; }
-  label { display: grid; gap: 2px; font-weight: 600; }
-  input, select { min-height: 44px; font-size: 1rem; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-weight: 400; }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .actions, .copy { display: flex; gap: 8px; align-items: end; }
-  .copy label { flex: 1; }
-  .actions { justify-content: flex-end; }
-  .muted { margin: 0; color: var(--muted); }
-  .advice { margin: 0; min-height: 1.4em; color: var(--muted); }
-  .bad { margin: 0; color: var(--bad); }
+  .form { display: grid; gap: var(--sp-2); }
+  /* NOTE: the required mark sits beside the label text, so the label lays out as two columns. */
+  .form > .field { grid-template-columns: auto 1fr; justify-content: start; }
+  .form > .field input { grid-column: 1 / -1; }
+  .copy { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: end; padding-top: var(--sp-2); border-top: 1px solid var(--border); }
+  .copy .field { flex: 1; min-width: 180px; }
+  .advice { min-height: 1.45em; color: var(--muted); }
 </style>

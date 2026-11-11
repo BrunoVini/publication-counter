@@ -1,5 +1,6 @@
 <script lang="ts">
   import { i18n, t } from '../../i18n/index.svelte';
+  import Icon from './Icon.svelte';
   import { languageEntry, languageName, languagesLoaded, loadLanguages, searchLanguages } from '../../domain/languages.svelte';
 
   type Props = { legend: string; required?: boolean } & (
@@ -34,15 +35,16 @@
 <fieldset>
   <legend>{props.legend}{#if props.required} <span aria-hidden="true">*</span>{/if}</legend>
   <label class="search">
-    <span class="sr">{t('lang.search')}</span>
+    <span class="visually-hidden">{t('lang.search')}</span>
+    <Icon name="search" />
     <input type="search" placeholder={t('lang.search')} bind:value={query} autocomplete="off" />
   </label>
-  <div class="list">
+  <div class="opts">
     {#if !languagesLoaded()}
       <p class="muted">{t('lang.loading')}</p>
     {:else}
       {#each [...selected, ...sorted.map((e) => e.c)] as code (code)}
-        <label class="opt">
+        <label class="check">
           <input
             type={props.mode === 'single' ? 'radio' : 'checkbox'}
             name={uid}
@@ -59,11 +61,6 @@
 </fieldset>
 
 <style>
-  fieldset { border: 1px solid var(--border); border-radius: 10px; display: grid; gap: 8px; margin: 0; min-width: 0; }
-  .search input { width: 100%; box-sizing: border-box; min-height: 44px; font-size: 16px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .list { max-height: 240px; overflow-y: auto; display: grid; align-content: start; }
-  .opt { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 16px; }
-  .opt input { width: 24px; height: 24px; flex: none; }
-  .muted { color: var(--muted); margin: 0; }
+  fieldset { display: grid; gap: var(--sp-2); }
+  .opts { max-height: 240px; overflow-y: auto; display: grid; align-content: start; }
 </style>

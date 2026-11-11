@@ -33,7 +33,7 @@
         </dl>
       {/each}
     </div>
-    <div class="actions">
+    <div class="acts">
       <button type="button" onclick={() => void resolveConflict('device')}>{t('drive.conflict.useDevice')}</button>
       <button type="button" onclick={() => void resolveConflict('drive')}>{t('drive.conflict.useDrive')}</button>
     </div>
@@ -42,15 +42,11 @@
 </dialog>
 
 <style>
-  dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; max-width: 460px; padding: 0; }
-  .content { padding: 16px; display: grid; gap: 12px; }
-  h2, p, dl { margin: 0; }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  dialog { width: min(460px, calc(100vw - 2 * var(--sp-4))); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
   dl { display: grid; gap: 2px; }
-  dt { color: var(--muted); font-size: 14px; }
-  dt.name { color: var(--text); font-weight: 700; font-size: 16px; }
-  dd { margin: 0 0 6px; }
-  .actions { display: grid; gap: 8px; }
-  button { min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; }
-  .muted { color: var(--muted); }
+  dt { color: var(--muted); font-size: var(--fs-sm); }
+  dt.name { color: var(--text); font-weight: 700; font-size: var(--fs-md); }
+  dd { margin: 0 0 var(--sp-2); }
+  .acts { display: grid; gap: var(--sp-2); }
 </style>

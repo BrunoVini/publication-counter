@@ -10,6 +10,7 @@
 
 <script lang="ts">
   import { t } from '../../i18n/index.svelte';
+  import Icon from './Icon.svelte';
 </script>
 
 <div class="toast-host no-print" aria-live="polite">
@@ -18,16 +19,18 @@
       <span>{current.message}</span>
       {#if current.action}
         {@const action = current.action}
-        <button type="button" onclick={() => { action.run(); current = null; }}>{action.label}</button>
+        <button type="button" class="act" onclick={() => { action.run(); current = null; }}>{action.label}</button>
       {/if}
-      <button type="button" aria-label={t('toast.dismiss')} onclick={() => (current = null)}>×</button>
+      <button type="button" aria-label={t('toast.dismiss')} onclick={() => (current = null)}><Icon name="close" /></button>
     </div>
   {/if}
 </div>
 
 <style>
-  .toast-host { position: fixed; left: 0; right: 0; bottom: 72px; display: flex; justify-content: center; padding: 0 16px; pointer-events: none; z-index: 20; }
-  .toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--text); color: var(--bg); border-radius: 10px; padding: 4px 8px 4px 16px; }
-  .toast button { background: none; border: 0; color: inherit; font-weight: 700; padding: 0 12px; }
-  @media (min-width: 900px) { .toast-host { bottom: 16px; } }
+  /* NOTE: on phones the toast floats above the sticky action button instead of covering it. */
+  .toast-host { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + var(--tap-lg) + var(--sp-6)); display: flex; justify-content: center; padding: 0 var(--sp-4); pointer-events: none; z-index: 20; }
+  .toast { pointer-events: auto; display: flex; align-items: center; gap: var(--sp-1); max-width: 480px; background: var(--text); color: var(--bg); border-radius: var(--radius); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-4); }
+  .toast button { background: none; border: 0; color: inherit; font-weight: 700; padding: 0 var(--sp-3); }
+  .toast .act { text-decoration: underline; }
+  @media (min-width: 900px) { .toast-host { bottom: var(--sp-4); } }
 </style>

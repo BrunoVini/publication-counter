@@ -11,6 +11,7 @@
   import { showToast } from '../shared/Toast.svelte';
   import SampleForm from './SampleForm.svelte';
   import WeightInput from './WeightInput.svelte';
+  import Icon from '../shared/Icon.svelte';
   import { errorMessage, parseWhole } from './errors';
 
   let { countId, pubId }: { countId: string; pubId: string } = $props();
@@ -267,9 +268,9 @@
   <header>
     <div class="head">
       <h2>{pub?.name}</h2>
-      <button type="button" onclick={() => (app.openItemId = null)}>{t('item.close')}</button>
+      <button type="button" onclick={() => (app.openItemId = null)}><Icon name="close" /> {t('item.close')}</button>
     </div>
-    <p class="total" aria-live="polite">{headerText}</p>
+    <p class="total" class:bad={summary.attention} class:none={!summary.attention && !summary.total} aria-live="polite">{headerText}</p>
   </header>
 
   {#if item}
@@ -283,7 +284,7 @@
         <div class="warn" role="status">
           {#if notice.units}<p>{t('sample.keepAside', { count: notice.units })}</p>{:else}<p>{t('sample.copied')}</p>{/if}
           {#if notice.replaced}<p>{t('sample.replaced')}</p>{/if}
-          <button type="button" onclick={() => (notice = null)}>{t('sample.ok')}</button>
+          <button type="button" onclick={() => (notice = null)}><Icon name="check" /> {t('sample.ok')}</button>
         </div>
       {/if}
 
@@ -301,64 +302,68 @@
         {#if pending}
           <div class="warn" role="alert">
             {#each pending.issues as issue (issue)}<p>{t(`warn.${issue}`)}</p>{/each}
-            <button type="button" onclick={addAnyway}>{t('warn.addAnyway')}</button>
-            <button type="button" onclick={() => { pending = null; wi?.focus(); }}>{t('dialog.cancel')}</button>
+            <div class="btn-row">
+              <button type="button" onclick={addAnyway}>{t('warn.addAnyway')}</button>
+              <button type="button" onclick={() => { pending = null; wi?.focus(); }}>{t('dialog.cancel')}</button>
+            </div>
           </div>
         {/if}
       {:else if tab === 'sealed'}
         <form class="grid" onsubmit={(e) => { e.preventDefault(); addSealed(); }}>
-          <label>{t('sealed.packs')}<input bind:this={packsInput} type="text" inputmode="numeric" bind:value={packsText} /></label>
-          <label>{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={perPackText} /></label>
+          <label class="field">{t('sealed.packs')}<input bind:this={packsInput} type="text" inputmode="numeric" bind:value={packsText} /></label>
+          <label class="field">{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={perPackText} /></label>
           {#if formError}<p class="bad" role="alert">{formError}</p>{/if}
-          <button type="submit" class="add">{t('weight.add')}</button>
+          <button type="submit" class="primary big">{t('weight.add')}</button>
         </form>
       {:else}
         <form class="grid" onsubmit={(e) => { e.preventDefault(); addHand(); }}>
-          <label>{t('hand.units')}<input bind:this={handInput} type="text" inputmode="numeric" bind:value={handText} /></label>
+          <label class="field">{t('hand.units')}<input bind:this={handInput} type="text" inputmode="numeric" bind:value={handText} /></label>
           {#if formError}<p class="bad" role="alert">{formError}</p>{/if}
-          <button type="submit" class="add">{t('weight.add')}</button>
+          <button type="submit" class="primary big">{t('weight.add')}</button>
         </form>
       {/if}
 
-      <div class="actions">
+      <div class="more">
         {#if !item.zero}<button type="button" onclick={onZero}>{t('item.zero')}</button>{/if}
         <details bind:this={menu}>
-          <summary aria-label={t('item.menu')}>⋮</summary>
+          <summary aria-label={t('item.menu')}><Icon name="more" /> {t('item.menu')}</summary>
           <div class="menu">
-            <button type="button" onclick={recount}>{t('item.recount')}</button>
-            <button type="button" onclick={resample}>{t('item.resample')}</button>
+            <button type="button" onclick={recount}><Icon name="undo" /> {t('item.recount')}</button>
+            <button type="button" onclick={resample}><Icon name="scale" /> {t('item.resample')}</button>
           </div>
         </details>
       </div>
     {/if}
 
     {#if ordered.length > 0}
-      <h3>{t('entries.title')}</h3>
+      <h3 class="sec">{t('entries.title')}</h3>
       <ul class="entries">
         {#each shown as e (e.id)}
-          <li>
+          <li class:editing={editing?.id === e.id && editable}>
             {#if editing && editing.id === e.id && editable}
               <form class="grid" onsubmit={(ev) => { ev.preventDefault(); saveEdit(); }} oninput={() => (editPending = null)}>
-                <p>{t('entry.edit.old', { value: entryText(e) })}</p>
+                <p class="muted">{t('entry.edit.old', { value: entryText(e) })}</p>
                 {#if e.kind === 'weighing'}
-                  <label>{t('entry.edit.weight', { unit })}<input type="text" inputmode="decimal" bind:value={editing.a} /></label>
+                  <label class="field">{t('entry.edit.weight', { unit })}<input type="text" inputmode="decimal" bind:value={editing.a} /></label>
                 {:else if e.kind === 'sealed'}
-                  <label>{t('sealed.packs')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
-                  <label>{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={editing.b} /></label>
+                  <label class="field">{t('sealed.packs')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
+                  <label class="field">{t('sealed.perPack')}<input type="text" inputmode="numeric" bind:value={editing.b} /></label>
                 {:else}
-                  <label>{t('hand.units')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
+                  <label class="field">{t('hand.units')}<input type="text" inputmode="numeric" bind:value={editing.a} /></label>
                 {/if}
                 {#if editPending}
                   <div class="warn" role="alert">
                     {#each editPending as issue (issue)}<p>{t(`warn.${issue}`)}</p>{/each}
-                    <button type="button" onclick={() => saveEdit(true)}>{t('warn.saveAnyway')}</button>
-                    <button type="button" onclick={() => (editPending = null)}>{t('dialog.cancel')}</button>
+                    <div class="btn-row">
+                      <button type="button" onclick={() => saveEdit(true)}>{t('warn.saveAnyway')}</button>
+                      <button type="button" onclick={() => (editPending = null)}>{t('dialog.cancel')}</button>
+                    </div>
                   </div>
                 {/if}
-                {#if draftTotal}<p aria-live="polite">{t('entry.edit.newTotal', { total: draftTotal })}</p>{/if}
+                {#if draftTotal}<p class="muted" aria-live="polite">{t('entry.edit.newTotal', { total: draftTotal })}</p>{/if}
                 <div class="actions">
                   <button type="button" onclick={() => (editing = null)}>{t('dialog.cancel')}</button>
-                  <button type="submit" class="add">{t('entry.save')}</button>
+                  <button type="submit" class="primary">{t('entry.save')}</button>
                 </div>
               </form>
             {:else}
@@ -369,8 +374,8 @@
                 {#if e.kind === 'sample'}
                   <button type="button" onclick={resample}>{t('item.resample')}</button>
                 {:else}
-                  <button type="button" aria-label={t('entry.edit')} onclick={() => startEdit(e)}>✏️</button>
-                  <button type="button" aria-label={t('entry.delete')} onclick={() => (confirm = { kind: 'delete', id: e.id })}>🗑️</button>
+                  <button type="button" class="icon-btn" aria-label={t('entry.edit')} onclick={() => startEdit(e)}><Icon name="pencil" size={22} /></button>
+                  <button type="button" class="icon-btn danger" aria-label={t('entry.delete')} onclick={() => (confirm = { kind: 'delete', id: e.id })}><Icon name="trash" size={22} /></button>
                 {/if}
               {/if}
             {/if}
@@ -379,6 +384,7 @@
       </ul>
       {#if ordered.length > 3}
         <button type="button" onclick={() => (showAll = !showAll)}>
+          <Icon name={showAll ? 'up' : 'down'} />
           {showAll ? t('entries.showLess') : t('entries.seeAll', { count: ordered.length })}
         </button>
       {/if}
@@ -390,26 +396,26 @@
   danger onconfirm={doConfirm} oncancel={() => (confirm = null)} />
 
 <style>
-  .panel { display: grid; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  header { position: sticky; top: 0; z-index: 1; background: var(--surface); padding-bottom: 4px; }
-  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  h2, h3, p { margin: 0; }
-  .total { font-size: 1.75rem; font-weight: 700; }
-  .tabs { display: flex; gap: 4px; }
-  .tabs button { flex: 1; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
-  .tabs button[aria-selected='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .grid { display: grid; gap: 8px; }
-  label { display: grid; gap: 2px; font-weight: 600; }
-  input { min-height: 44px; font-size: 1rem; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-weight: 400; }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
-  .add { min-height: 56px; font-size: 1.25rem; font-weight: 700; border: 0; background: var(--accent); color: var(--on-accent); }
-  .actions { display: flex; gap: 8px; align-items: start; flex-wrap: wrap; }
-  summary { min-height: 44px; min-width: 44px; display: grid; place-items: center; cursor: pointer; font-size: 1.25rem; }
-  .menu { display: grid; gap: 4px; }
-  .entries { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-  .entries li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .panel { display: grid; gap: var(--sp-3); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  header { position: sticky; top: 0; z-index: 1; background: var(--surface); padding-bottom: var(--sp-1); border-bottom: 1px dashed var(--border-strong); }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); }
+  .head h2 { overflow-wrap: anywhere; }
+  .total { font-size: var(--fs-xl); font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .total.none { color: var(--todo); font-size: var(--fs-lg); }
+  .total.bad { color: var(--bad); font-size: var(--fs-lg); }
+  .tabs { display: flex; gap: var(--sp-1); }
+  .tabs button { flex: 1; padding: 0 var(--sp-1); }
+  /* NOTE: the selected tab is filled and heavier, not just a different colour. */
+  .tabs button[aria-selected='true'] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+  .grid { display: grid; gap: var(--sp-2); }
+  .more { display: flex; gap: var(--sp-2); align-items: start; flex-wrap: wrap; }
+  summary { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: var(--tap); padding: 0 var(--sp-3); border-radius: var(--radius); color: var(--muted); font-weight: 600; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .menu { display: grid; gap: var(--sp-2); margin-top: var(--sp-1); }
+  .menu button { justify-content: flex-start; }
+  .entries { list-style: none; padding: 0; display: grid; gap: var(--sp-1); }
+  .entries li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); padding: 2px var(--sp-1) 2px var(--sp-3); min-height: var(--tap-lg); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+  .entries li.editing { padding: var(--sp-3); border: 2px solid var(--accent); }
+  .entries form { flex: 1; }
   .val { font-weight: 600; flex: 1; }
-  .muted { color: var(--muted); }
-  .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 10px; padding: 8px; display: grid; gap: 4px; }
-  .bad { color: var(--bad); }
 </style>
