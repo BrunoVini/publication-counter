@@ -36,7 +36,7 @@ export async function loadDataset(): Promise<Dataset | null> {
 }
 
 /** The raw value of the last unreadable dataset, if any. */
-export async function getCorrupt(): Promise<unknown | undefined> {
+export async function getCorrupt(): Promise<unknown> {
   try { return await get<unknown>('corrupt', kv()); } catch { return undefined; }
 }
 

@@ -10,7 +10,7 @@ export type Conflict = { remote: Dataset; remoteMeta: DriveMeta; local: Summary;
 export type Status = 'off' | 'idle' | 'syncing' | 'expired' | 'error' | 'conflict' | 'notConfigured';
 
 export const drive = $state({
-  status: 'off' as Status,
+  status: 'off',
   lastSyncAt: null as string | null,
   conflict: null as Conflict | null,
   error: null as string | null,
@@ -43,7 +43,7 @@ const enqueue = <T>(job: () => Promise<T>): Promise<T> => {
 };
 
 const valid = () => tok !== null && tok.expiresAt > Date.now();
-const local = (): Dataset => $state.snapshot(app.ds) as Dataset;
+const local = (): Dataset => $state.snapshot(app.ds);
 
 const summary = (ds: Dataset, modifiedAt: string): Summary =>
   ({ modifiedAt, hasOpenCount: ds.counts.some((c) => !c.finishedAt), publications: ds.publications.length });
@@ -166,7 +166,7 @@ export function syncNow(): Promise<void> {
       const api = await loadApi();
       let meta: DriveMeta;
       try {
-        meta = await api.getMeta(token, st.fileId!);
+        meta = await api.getMeta(token, st.fileId);
       } catch (e) {
         if ((e as { kind?: string })?.kind !== 'notFound') throw e;
         // NOTE: the file was deleted on Drive; recreate it from the local data.

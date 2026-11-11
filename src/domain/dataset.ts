@@ -193,7 +193,7 @@ export function addEntry(
   ds: Dataset, countId: string, pubId: string, e: NewEntry, newId: () => string,
 ): Entry {
   const item = editable(ds, countId, pubId);
-  const entry = { ...e, id: newId() } as Entry;
+  const entry = { ...e, id: newId() };
   if (!validEntry(entry)) fail('invalidEntry');
   if (entry.kind === 'weighing' && !item.sample) fail('missingSample');
   item.entries.push(entry);

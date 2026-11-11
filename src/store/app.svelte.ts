@@ -8,8 +8,8 @@ import { clearAll, loadDataset, pushBackup, requestPersistentStorage, saveDatase
 
 export const app = $state({
   ds: emptyDataset('pending'),
-  saveState: 'saved' as 'saved' | 'saving' | 'unavailable',
-  tab: 'count' as 'count' | 'publications' | 'settings',
+  saveState: 'saved',
+  tab: 'count',
   openItemId: null as string | null,
   // NOTE: set by first run's "Paste list"; the publications tab consumes it to open the paste dialog.
   pasteOpen: false,
@@ -43,7 +43,7 @@ function save(): void {
   pending++;
   app.saveState = 'saving';
   // $state.snapshot unwraps the proxy; taken now so each write holds its own state.
-  const snap = $state.snapshot(app.ds) as Dataset;
+  const snap = $state.snapshot(app.ds);
   void enqueue(() => saveDataset(snap)).then((ok) => {
     pending--;
     if (!ok) app.saveState = 'unavailable';
@@ -73,7 +73,7 @@ export async function init(): Promise<void> {
 export function act<T>(fn: (ds: Dataset) => T): T {
   // NOTE: transactional: any throw or schema-invalid result restores the snapshot, so memory
   // never holds data the file schema would reject on the next launch.
-  const before = $state.snapshot(app.ds) as Dataset;
+  const before = $state.snapshot(app.ds);
   const restore = () => { app.ds = before; };
   let result: T;
   try { result = fn(app.ds); } catch (e) { restore(); throw e; }
@@ -90,7 +90,7 @@ function applyPreferences(ds: Dataset): void {
 }
 
 export async function replaceDataset(next: Dataset, reason: string): Promise<void> {
-  const snap = $state.snapshot(app.ds) as Dataset;
+  const snap = $state.snapshot(app.ds);
   if (!(await enqueue(() => pushBackup(snap, reason)))) throw 'backupFailed';
   app.ds = next;
   applyPreferences(next);

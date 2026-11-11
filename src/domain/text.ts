@@ -14,6 +14,7 @@ export const norm = (s: string): string =>
     .trim();
 
 /** Control characters (tab, newline, DEL...) become spaces; the file schema rejects them. */
+// eslint-disable-next-line no-control-regex -- control characters are exactly what this strips
 export const clean = (s: string): string => s.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
 
 export function identityKey(p: PublicationIdentity): string {

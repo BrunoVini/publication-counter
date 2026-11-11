@@ -9,7 +9,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { denylist: [/^\/privacy\.html$/] }));
 
 // Update prompt: the page asks the waiting worker to take over.
-self.addEventListener('message', (e) => { if (e.data?.type === 'SKIP_WAITING') void self.skipWaiting(); });
+self.addEventListener('message', (e) => { if ((e.data as { type?: string } | undefined)?.type === 'SKIP_WAITING') void self.skipWaiting(); });
 
 // Share target: keep the posted file in Cache Storage and hand it to the page.
 self.addEventListener('fetch', (event) => {

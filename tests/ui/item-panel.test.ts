@@ -159,7 +159,7 @@ describe('item panel', () => {
     ds.publications[0].packSize = 50;
     panel();
     await fireEvent.click(screen.getByRole('tab', { name: 'Sealed' }));
-    expect((screen.getByLabelText('Units per pack') as HTMLInputElement).value).toBe('50');
+    expect((screen.getByLabelText<HTMLInputElement>('Units per pack')).value).toBe('50');
     await type('Packs', '3');
     await type('Units per pack', '40');
     await fireEvent.click(screen.getByRole('button', { name: '+ Add' }));
@@ -241,7 +241,7 @@ describe('item panel guards', () => {
     panel();
     const before = item().entries[0];
     await fireEvent.click(screen.getByRole('button', { name: 'Editar lançamento' }));
-    expect((screen.getByLabelText('Peso (g)') as HTMLInputElement).value).toBe('1500,5');
+    expect((screen.getByLabelText<HTMLInputElement>('Peso (g)')).value).toBe('1500,5');
     await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     expect(item().entries[0]).toBe(before);
   });
@@ -251,7 +251,7 @@ describe('item panel guards', () => {
     addEntry(app.ds, 'c1', 'p', { kind: 'weighing', weightG: 1200 }, id);
     panel();
     await fireEvent.click(screen.getByRole('button', { name: 'Edit entry' }));
-    expect((screen.getByLabelText('Weight (kg)') as HTMLInputElement).value).toBe('1.2');
+    expect((screen.getByLabelText<HTMLInputElement>('Weight (kg)')).value).toBe('1.2');
     await type('Weight (kg)', '1,5');
     await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(item().entries[0]).toMatchObject({ weightG: 1500 });
@@ -297,7 +297,7 @@ describe('scale editor', () => {
     setup({ sample: SAMPLE, unit: 'kg' });
     const onsave = vi.fn();
     render(ScaleEditor, { scale: [{ upToG: 1000, resolutionG: 1 }], onsave, oncancel: () => {} });
-    expect((screen.getByLabelText(/^Up to \(kg\)/) as HTMLInputElement).value).toBe('1');
+    expect((screen.getByLabelText<HTMLInputElement>(/^Up to \(kg\)/)).value).toBe('1');
     await type(/^Up to \(kg\)/, '2');
     await fireEvent.click(screen.getByRole('button', { name: 'Save scale' }));
     expect(onsave).toHaveBeenCalledWith([{ upToG: 2000, resolutionG: 1 }]);

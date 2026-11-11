@@ -44,7 +44,7 @@ describe('scale editor', () => {
     const onsave = vi.fn();
     render(ScaleEditor, { scale: [], onsave, oncancel: () => undefined });
     await fireEvent.click(screen.getByRole('button', { name: '+ Add range' }));
-    const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+    const inputs = screen.getAllByRole<HTMLInputElement>('textbox');
     const vals = ['100', '1', '200', '0.5'];
     for (let i = 0; i < 4; i++) await fireEvent.input(inputs[i], { target: { value: vals[i] } });
     await fireEvent.click(screen.getByRole('button', { name: 'Save scale' }));
@@ -55,7 +55,7 @@ describe('scale editor', () => {
     app.ds.settings.unit = 'kg';
     const onsave = vi.fn();
     render(ScaleEditor, { scale: [], onsave, oncancel: () => undefined });
-    const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+    const inputs = screen.getAllByRole<HTMLInputElement>('textbox');
     await fireEvent.input(inputs[0], { target: { value: '1' } });
     await fireEvent.input(inputs[1], { target: { value: '0.5' } });
     await fireEvent.click(screen.getByRole('button', { name: 'Save scale' }));

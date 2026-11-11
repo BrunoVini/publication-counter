@@ -2,7 +2,7 @@
   import { fmtNumber, t } from '../../i18n/index.svelte';
   import Icon from '../shared/Icon.svelte';
 
-  let { onback }: { onback: () => void } = $props();
+  const { onback }: { onback: () => void } = $props();
 </script>
 
 <section class="stack">

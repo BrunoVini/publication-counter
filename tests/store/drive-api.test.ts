@@ -5,7 +5,10 @@ const meta = { id: 'f1', version: '3', modifiedTime: '2026-01-01T00:00:00Z' };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const mock = (...rs: (Response | Error)[]) => {
   const f = vi.fn();
-  for (const r of rs) r instanceof Error ? f.mockRejectedValueOnce(r) : f.mockResolvedValueOnce(r);
+  for (const r of rs) {
+    if (r instanceof Error) f.mockRejectedValueOnce(r);
+    else f.mockResolvedValueOnce(r);
+  }
   vi.stubGlobal('fetch', f);
   return f;
 };

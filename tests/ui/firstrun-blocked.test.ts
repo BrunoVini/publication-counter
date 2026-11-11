@@ -14,7 +14,7 @@ afterEach(() => { cleanup(); app.tab = 'count'; });
 
 test('first run preselects the primary code without waiting for the languages list', async () => {
   render(App);
-  const next = screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement;
+  const next = screen.getByRole<HTMLButtonElement>('button', { name: 'Continue' });
   expect(next.disabled).toBe(false);
   await fireEvent.click(next);
   expect(app.ds.settings.pubLanguage).toBe('E');

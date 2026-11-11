@@ -16,7 +16,7 @@ describe('typed confirmation', () => {
     expect(t('set.wipeWord')).toBe(word);
     const onconfirm = vi.fn();
     render(ConfirmDialog, { open: true, title: 'x', message: 'y', confirmLabel: 'Go', requireText: t('set.wipeWord'), onconfirm, oncancel() {} });
-    const go = screen.getByRole('button', { name: 'Go' }) as HTMLButtonElement;
+    const go = screen.getByRole<HTMLButtonElement>('button', { name: 'Go' });
     const input = screen.getByRole('textbox');
     expect(go.disabled).toBe(true);
     await fireEvent.input(input, { target: { value: word.slice(0, -1) } });
@@ -30,6 +30,6 @@ describe('typed confirmation', () => {
   test('without requireText there is no input and the button is enabled', () => {
     render(ConfirmDialog, { open: true, title: 'x', message: 'y', confirmLabel: 'Go', onconfirm() {}, oncancel() {} });
     expect(screen.queryByRole('textbox')).toBeNull();
-    expect((screen.getByRole('button', { name: 'Go' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole<HTMLButtonElement>('button', { name: 'Go' })).disabled).toBe(false);
   });
 });

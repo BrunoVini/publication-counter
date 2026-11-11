@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '../../i18n/index.svelte';
 
-  let { open, title, message, confirmLabel, danger = false, requireText, onconfirm, oncancel }: {
+  const { open, title, message, confirmLabel, danger = false, requireText, onconfirm, oncancel }: {
     open: boolean; title: string; message: string; confirmLabel: string;
     danger?: boolean; requireText?: string; onconfirm: () => void; oncancel: () => void;
   } = $props();

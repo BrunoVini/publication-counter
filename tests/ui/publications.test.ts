@@ -61,7 +61,7 @@ describe('publications screen', () => {
   test('draft name from the count screen opens a prefilled form', () => {
     app.pubDraftName = 'Brochure';
     render(PublicationsScreen);
-    expect((screen.getByLabelText(/^Name/) as HTMLInputElement).value).toBe('Brochure');
+    expect((screen.getByLabelText<HTMLInputElement>(/^Name/)).value).toBe('Brochure');
     expect(app.pubDraftName).toBeNull();
   });
 
@@ -124,7 +124,7 @@ describe('publications screen', () => {
     app.ds.settings.pubLanguages = ['E', 'S'];
     render(PublicationsScreen);
     await fireEvent.click(screen.getByRole('button', { name: '+ New' }));
-    const sel = screen.getByLabelText('Language') as HTMLSelectElement;
+    const sel = screen.getByLabelText<HTMLSelectElement>('Language');
     expect(sel.value).toBe('T');
     expect([...sel.options].map((o) => o.textContent)).toEqual(['Portuguese (Brazil)', 'English', 'Spanish', 'Other language…']);
   });
@@ -140,7 +140,7 @@ describe('publications screen', () => {
     await fireEvent.click(dlg.getByRole('radio', { name: /^German(·|$)/ }));
     await fireEvent.click(dlg.getByRole('checkbox', { name: /add it to my other/ }));
     await fireEvent.click(dlg.getByRole('button', { name: 'Use this language' }));
-    expect((screen.getByLabelText('Language') as HTMLSelectElement).value).toBe('X');
+    expect((screen.getByLabelText<HTMLSelectElement>('Language')).value).toBe('X');
     expect(app.ds.settings.pubLanguages).toEqual(['X']);
     await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(app.ds.publications[2].language).toBe('X');
@@ -153,7 +153,7 @@ describe('publications screen', () => {
     expect(screen.getByRole('button', { name: /Old tract/ }).textContent).toContain('Mandarim');
     expect(screen.getByRole('button', { name: /Coded/ }).textContent).toContain('English');
     await fireEvent.click(screen.getByRole('button', { name: /Old tract/ }));
-    const sel = screen.getByLabelText('Language') as HTMLSelectElement;
+    const sel = screen.getByLabelText<HTMLSelectElement>('Language');
     expect(sel.value).toBe('Mandarim');
     expect(sel.selectedOptions[0].textContent).toBe('Mandarim');
   });
@@ -171,7 +171,7 @@ describe('publications screen', () => {
     render(PublicationsScreen);
     await fireEvent.click(screen.getByRole('button', { name: 'Paste list' }));
     const dlg = within(screen.getByRole('dialog', { hidden: true, name: 'Paste list' }));
-    expect((dlg.getByLabelText('Default language') as HTMLSelectElement).value).toBe('S');
+    expect((dlg.getByLabelText<HTMLSelectElement>('Default language')).value).toBe('S');
     await fireEvent.input(dlg.getByLabelText(/^List/), { target: { value: 'One\tInglês\nTwo\tKlingon\nThree' } });
     flushSync();
     await fireEvent.click(dlg.getByRole('button', { name: /^Add 3/ }));

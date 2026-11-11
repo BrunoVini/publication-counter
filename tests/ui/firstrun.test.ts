@@ -94,7 +94,7 @@ describe('first run', () => {
     await fireEvent.click(screen.getByRole('radio', { name: 'oz' }));
     await fireEvent.click(screen.getByRole('radio', { name: 'English' }));
     expect(app.ds.settings.unit).toBe('oz');
-    expect((screen.getByRole('radio', { name: 'oz' }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole<HTMLInputElement>('radio', { name: 'oz' })).checked).toBe(true);
   });
 
   test('a file from a newer version shows the error and keeps data', async () => {
@@ -120,7 +120,7 @@ describe('first run', () => {
 
   test('the primary publication language is preselected from the UI language and saved', async () => {
     render(App);
-    expect(((await screen.findByRole('radio', { name: 'Português (Brasil)' })) as HTMLInputElement).checked).toBe(true);
+    expect((await screen.findByRole<HTMLInputElement>('radio', { name: 'Português (Brasil)' })).checked).toBe(true);
     await fireEvent.click(screen.getAllByRole('radio', { name: 'English' })[0]);
     await waitFor(() => expect(i18n.lang).toBe('en'));
     await waitFor(() => expect(screen.getAllByRole('radio', { name: 'English' }).length).toBe(2));

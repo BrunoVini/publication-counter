@@ -7,7 +7,7 @@
     | { mode: 'single'; value: string; onchange: (v: string) => void }
     | { mode: 'multi'; value: string[]; onchange: (v: string[]) => void }
   );
-  let props: Props = $props();
+  const props: Props = $props();
 
   const LIMIT = 50;
   const uid = $props.id();

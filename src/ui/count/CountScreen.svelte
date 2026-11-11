@@ -164,7 +164,7 @@
       {/if}
 
       <ul class="list" aria-label={t('count.list')}>
-        {#each visible as { item, pub, status } (pub.id)}
+        {#each visible as { pub, status } (pub.id)}
           <li>
             <button type="button" class="row" class:selected={selectedId === pub.id} class:open={app.openItemId === pub.id} aria-expanded={app.openItemId === pub.id} onclick={() => toggle(pub.id)}>
               <span class="main">

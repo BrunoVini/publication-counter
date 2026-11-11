@@ -44,7 +44,7 @@ describe('count screen', () => {
     const rows = screen.getAllByRole('button', { name: /items?/ });
     expect(rows[0].textContent).toContain('Newer');
     expect(rows[1].textContent).toContain('Old');
-    fireEvent.click(rows[0]);
+    void fireEvent.click(rows[0]);
     expect(app.summaryCountId).toBe('h2');
   });
 
@@ -52,7 +52,7 @@ describe('count screen', () => {
     app.ds = dataset();
     render(CountScreen);
     await fireEvent.click(screen.getByRole('button', { name: 'New count' }));
-    const input = screen.getByLabelText(/^Who is counting/) as HTMLInputElement;
+    const input = screen.getByLabelText<HTMLInputElement>(/^Who is counting/);
     expect(input.value).toBe('Ana');
     await fireEvent.input(input, { target: { value: '   ' } });
     await fireEvent.click(screen.getByRole('button', { name: 'Start' }));

@@ -17,6 +17,8 @@ const BOUNDARY = 'pubcount_boundary_7f3a9c';
 
 const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
+type DriveErrorBody = { error?: { errors?: { reason?: string }[] } };
+
 async function kindFor(res: Response): Promise<DriveErrorKind> {
   const s = res.status;
   if (s === 401) return 'auth';
@@ -26,7 +28,7 @@ async function kindFor(res: Response): Promise<DriveErrorKind> {
     // NOTE: body may not be JSON; fall through to 'server' when unreadable.
     let reason = '';
     try {
-      reason = String((await res.json())?.error?.errors?.[0]?.reason ?? '');
+      reason = String(((await res.json()) as DriveErrorBody | null)?.error?.errors?.[0]?.reason ?? '');
     } catch { /* ignore */ }
     if (reason === 'authError' || reason === 'insufficientPermissions') return 'auth';
     if (reason.includes('rateLimitExceeded') || reason.includes('RateLimitExceeded')) return 'rateLimit';
@@ -47,7 +49,7 @@ async function call(token: string, url: string, init: RequestInit = {}): Promise
 
 const list = async (token: string, q: string, fields: string, order = '') => {
   const res = await call(token, `${FILES}?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(`files(${fields})`)}&pageSize=1${order}`);
-  return ((await res.json()).files ?? []) as DriveMeta[];
+  return (((await res.json()) as { files?: DriveMeta[] }).files ?? []);
 };
 
 /** The app folder id, or null; never creates it. */
@@ -68,7 +70,7 @@ export async function ensureFolder(token: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: FOLDER_NAME, mimeType: FOLDER_MIME }),
   });
-  return (await res.json()).id;
+  return ((await res.json()) as { id: string }).id;
 }
 
 export async function findFile(token: string, datasetId: string): Promise<DriveMeta | null> {
@@ -83,7 +85,7 @@ export async function findLatestInFolder(token: string, folderId: string): Promi
 }
 
 export async function getMeta(token: string, id: string): Promise<DriveMeta> {
-  return (await call(token, `${FILES}/${encodeURIComponent(id)}?fields=${FIELDS}`)).json();
+  return (await (await call(token, `${FILES}/${encodeURIComponent(id)}?fields=${FIELDS}`)).json()) as DriveMeta;
 }
 
 export async function download(token: string, id: string): Promise<string> {
@@ -110,5 +112,5 @@ export async function upload(
     headers: { 'Content-Type': `multipart/related; boundary=${BOUNDARY}` },
     body,
   });
-  return res.json();
+  return (await res.json()) as DriveMeta;
 }

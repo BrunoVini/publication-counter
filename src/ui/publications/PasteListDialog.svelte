@@ -10,7 +10,7 @@
   import { errorMessage } from '../count/errors';
   import Icon from '../shared/Icon.svelte';
 
-  let { open, onclose }: { open: boolean; onclose: () => void } = $props();
+  const { open, onclose }: { open: boolean; onclose: () => void } = $props();
 
   let dlg: HTMLDialogElement;
   let text = $state('');

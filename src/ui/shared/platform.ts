@@ -2,6 +2,5 @@
 export function isIosBrowser(): boolean {
   const ua = navigator.userAgent;
   const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ios && (navigator as any).standalone !== true;
+  return ios && (navigator as Navigator & { standalone?: boolean }).standalone !== true;
 }

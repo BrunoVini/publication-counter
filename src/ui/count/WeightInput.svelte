@@ -3,7 +3,7 @@
   import { parseDecimal, toGrams } from '../../domain/units';
   import type { WeightUnit } from '../../domain/types';
 
-  let { unit, onadd, previewUnits, onunit, oninput }: {
+  const { unit, onadd, previewUnits, onunit, oninput }: {
     unit: WeightUnit;
     /** Return false to keep the typed value (blocked or waiting for confirmation). */
     onadd: (grams: number) => boolean | void;

@@ -14,7 +14,7 @@
   import Icon from '../shared/Icon.svelte';
   import { errorMessage, parseWhole } from './errors';
 
-  let { countId, pubId }: { countId: string; pubId: string } = $props();
+  const { countId, pubId }: { countId: string; pubId: string } = $props();
 
   type Tab = 'weigh' | 'sealed' | 'hand';
   const uid = () => crypto.randomUUID();

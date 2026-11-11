@@ -46,7 +46,7 @@ type LaunchParams = { files: { getFile(): Promise<File> }[] };
 
 /** File handler: double-clicking a .pubcount file in the installed app. */
 export function setupLaunchQueue(): void {
-  const lq = (window as unknown as { launchQueue?: { setConsumer(fn: (p: LaunchParams) => void): void } }).launchQueue;
+  const lq = (window as unknown as { launchQueue?: { setConsumer(fn: (p: LaunchParams) => void | Promise<void>): void } }).launchQueue;
   lq?.setConsumer(async (p) => {
     const f = await p.files[0]?.getFile();
     if (f) await handleIncoming(await f.text());

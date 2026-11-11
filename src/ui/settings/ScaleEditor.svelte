@@ -7,7 +7,7 @@
   import type { ScaleRange } from '../../domain/types';
   import Icon from '../shared/Icon.svelte';
 
-  let { scale, onsave, oncancel, cancelLabel }: {
+  const { scale, onsave, oncancel, cancelLabel }: {
     scale: ScaleRange[];
     onsave: (scale: ScaleRange[]) => void;
     oncancel: () => void;
@@ -18,7 +18,7 @@
   const show = (g: number): string => String(Number(fromGrams(g, app.ds.settings.unit).toPrecision(6)));
 
   // NOTE: the editor takes a snapshot of the scale when it opens; it does not follow later prop changes.
-  let rows = $state(
+  const rows = $state(
     untrack(() => scale.length > 0
       ? scale.map((r) => ({ upTo: show(r.upToG), res: show(r.resolutionG) }))
       : [{ upTo: '', res: '' }]),

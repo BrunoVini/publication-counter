@@ -29,7 +29,7 @@ describe('language picker', () => {
   test('multi mode adds and removes codes and keeps selected ones listed', async () => {
     const onchange = vi.fn();
     render(LanguagePicker, { mode: 'multi', legend: 'Outros', value: ['E'], onchange });
-    expect((screen.getByRole('checkbox', { name: /^Inglês(·|$)/ }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole<HTMLInputElement>('checkbox', { name: /^Inglês(·|$)/ })).checked).toBe(true);
     await fireEvent.input(screen.getByRole('searchbox'), { target: { value: 'frances' } });
     await fireEvent.click(await waitFor(() => screen.getByRole('checkbox', { name: /^Francês(·|$)/ })));
     expect(onchange).toHaveBeenLastCalledWith(['E', 'F']);

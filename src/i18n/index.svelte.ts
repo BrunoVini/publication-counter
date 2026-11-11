@@ -31,7 +31,7 @@ function lookup(lang: Lang, key: string, count?: number): string | undefined {
 export function t(key: string, params?: Record<string, string | number>): string {
   const count = typeof params?.count === 'number' ? params.count : undefined;
   const text = lookup(i18n.lang, key, count) ?? lookup('en', key, count) ?? key;
-  return text.replace(/\{(\w+)\}/g, (m, name) => (params && name in params ? String(params[name]) : m));
+  return text.replace(/\{(\w+)\}/g, (m, name: string) => (params && name in params ? String(params[name]) : m));
 }
 
 export function fmtNumber(n: number, maxFractionDigits = 3): string {

@@ -4,6 +4,7 @@ import type { Dataset } from './types';
 
 export const CURRENT_FORMAT = 1;
 
+// eslint-disable-next-line no-control-regex -- control characters are exactly what the schema rejects
 const text = v.pipe(v.string(), v.maxLength(200), v.regex(/^[^\u0000-\u001F]*$/));
 const id = v.pipe(text, v.minLength(1));
 const date = v.pipe(
@@ -74,7 +75,7 @@ export const serializeDataset = (ds: Dataset): string => JSON.stringify(ds, null
 /** Same schema and structural checks as parseDataset, for an in-memory value. */
 export function validateDataset(ds: unknown): boolean {
   const r = v.safeParse(schema, ds);
-  return r.success && structureOk(r.output as Dataset);
+  return r.success && structureOk(r.output);
 }
 
 export function parseDataset(textIn: string):
@@ -87,7 +88,7 @@ export function parseDataset(textIn: string):
   const migrated = migrate(raw);
   if (!validateDataset(migrated)) return { ok: false, error: 'invalid' };
   // NOTE: parsed twice (validate, then output) to keep one validation path; files are small.
-  return { ok: true, dataset: v.parse(schema, migrated) as Dataset };
+  return { ok: true, dataset: v.parse(schema, migrated) };
 }
 
 export function exportBaseName(ds: Dataset): string {

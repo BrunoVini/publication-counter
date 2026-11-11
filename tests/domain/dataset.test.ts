@@ -124,9 +124,9 @@ test('invalid entries rejected (0 packs, 0 units, 0 g, negative)', () => {
   expect(err(() => setSample(ds, c.id, a.id, { units: 5, weightG: 0 }, newId))).toBe('invalidEntry');
   expect(c.items[0].entries).toEqual([]);
   const e = addEntry(ds, c.id, a.id, { kind: 'hand', units: 4 }, newId);
-  expect(err(() => updateEntry(ds, c.id, a.id, e.id, { units: 0 } as never))).toBe('invalidEntry');
+  expect(err(() => updateEntry(ds, c.id, a.id, e.id, { units: 0 }))).toBe('invalidEntry');
   expect(err(() => updateEntry(ds, c.id, a.id, e.id, { kind: 'weighing' } as never))).toBe('invalidEntry');
-  updateEntry(ds, c.id, a.id, e.id, { units: 6, id: 'hacked' } as never);
+  updateEntry(ds, c.id, a.id, e.id, { units: 6, id: 'hacked' });
   expect(c.items[0].entries[0]).toEqual({ id: e.id, kind: 'hand', units: 6 });
 });
 
@@ -223,7 +223,7 @@ test('sample entries are locked: updateEntry/deleteEntry throw useSetSample', ()
   const c = startCount(ds, 'A', 't', newId);
   setSample(ds, c.id, b.id, { units: 10, weightG: 50 }, newId);
   const e = c.items.find((i) => i.publicationId === b.id)!.entries[0];
-  expect(err(() => updateEntry(ds, c.id, b.id, e.id, { units: 3 } as never))).toBe('useSetSample');
+  expect(err(() => updateEntry(ds, c.id, b.id, e.id, { units: 3 }))).toBe('useSetSample');
   expect(err(() => deleteEntry(ds, c.id, b.id, e.id))).toBe('useSetSample');
 });
 

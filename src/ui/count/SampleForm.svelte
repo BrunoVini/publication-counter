@@ -8,7 +8,7 @@
   import ScaleEditor from '../settings/ScaleEditor.svelte';
   import { errorMessage, parseWhole } from './errors';
 
-  let { countId, pubId, onsaved, oncancel }: {
+  const { countId, pubId, onsaved, oncancel }: {
     countId: string; pubId: string;
     /** `units` is the sample size to keep aside; undefined when the weight was copied instead. */
     onsaved: (r: { units?: number; replacedPrevious: boolean }) => void;

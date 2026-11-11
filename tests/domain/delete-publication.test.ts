@@ -51,7 +51,7 @@ test('excel export keeps the deleted publication row', async () => {
   const { ds, a, c1 } = setup();
   deletePublication(ds, a.id);
   await exportExcel(summaryRows(ds, c1.id), { date: '2026-01-01', counter: 'x' });
-  const data = writeXlsxFile.mock.calls[0][0] as unknown[][];
+  const data = writeXlsxFile.mock.calls[0][0];
   expect(data.some((r) => r[0] === 'Alpha' && r[3] === 7)).toBe(true);
 });
 

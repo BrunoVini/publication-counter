@@ -13,7 +13,7 @@
   import { exportExcel } from './excel';
   import Icon from '../shared/Icon.svelte';
 
-  let { countId }: { countId: string } = $props();
+  const { countId }: { countId: string } = $props();
 
   void loadLanguages();
   const count = $derived(app.ds.counts.find((c) => c.id === countId));

@@ -2,7 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vi
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 
 const m = vi.hoisted(() => ({
-  drive: { status: 'off', error: null as string | null, lastSyncAt: null as string | null, conflict: null as unknown },
+  drive: { status: 'off', error: null as string | null, lastSyncAt: null as string | null, conflict: null as Record<string, unknown> | null },
   warmDrive: vi.fn(async () => {}),
   connect: vi.fn(async () => {}),
   reconnect: vi.fn(async () => {}),
@@ -71,7 +71,7 @@ describe('CloudSection', () => {
   test('back up now is disabled while syncing', () => {
     m.drive.status = 'syncing';
     render(CloudSection);
-    expect((screen.getByRole('button', { name: 'Back up now' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole<HTMLButtonElement>('button', { name: 'Back up now' })).disabled).toBe(true);
   });
 
   test('expired and error offer disconnect', () => {
@@ -155,7 +155,7 @@ describe('CloudSection delete backup', () => {
   test('connected shows an enabled delete button that confirms then deletes', async () => {
     m.drive.status = 'idle';
     render(CloudSection);
-    const btn = screen.getByRole('button', { name: 'Delete Drive backup and disconnect' }) as HTMLButtonElement;
+    const btn = screen.getByRole<HTMLButtonElement>('button', { name: 'Delete Drive backup and disconnect' });
     expect(btn.disabled).toBe(false);
     await fireEvent.click(btn);
     expect(m.deleteDriveBackup).not.toHaveBeenCalled();
@@ -167,7 +167,7 @@ describe('CloudSection delete backup', () => {
   test('expired shows it disabled with a reconnect hint', () => {
     m.drive.status = 'expired';
     render(CloudSection);
-    expect((screen.getByRole('button', { name: 'Delete Drive backup and disconnect' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole<HTMLButtonElement>('button', { name: 'Delete Drive backup and disconnect' })).disabled).toBe(true);
     expect(screen.getByText('Reconnect first to delete the Drive backup.')).toBeTruthy();
   });
 
