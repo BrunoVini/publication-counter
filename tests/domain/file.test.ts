@@ -22,6 +22,16 @@ const full = (): Dataset => ({
 const bad = (mut: (d: any) => void) => { const d: any = JSON.parse(serializeDataset(full())); mut(d); return parseDataset(JSON.stringify(d)); };
 
 describe('pubcount file', () => {
+  it('accepts old files without the publication language settings', () => {
+    expect(full().settings.pubLanguage).toBeUndefined();
+    expect(parseDataset(serializeDataset(full())).ok).toBe(true);
+  });
+  it('round trips publication language settings and rejects bad ones', () => {
+    const d = full();
+    d.settings.pubLanguage = 'T'; d.settings.pubLanguages = ['E', 'S'];
+    expect(parseDataset(serializeDataset(d))).toEqual({ ok: true, dataset: d });
+    expect(bad((x) => { x.settings.pubLanguages = 'E'; })).toEqual({ ok: false, error: 'invalid' });
+  });
   it('round trips', () => {
     const r = parseDataset(serializeDataset(full()));
     expect(r).toEqual({ ok: true, dataset: full() });

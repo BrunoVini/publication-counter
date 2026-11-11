@@ -4,7 +4,8 @@ export interface PublicationIdentity {
   variant: string;
 }
 
-const norm = (s: string): string =>
+/** Accent-, case- and spacing-insensitive form used for every comparison and search. */
+export const norm = (s: string): string =>
   s
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -19,12 +20,15 @@ export function identityKey(p: PublicationIdentity): string {
   return [p.name, p.language, p.variant].map(norm).join('\u0000');
 }
 
-export function parsePastedList(text: string, defaultLanguage: string): PublicationIdentity[] {
+/** `resolveLanguage` maps free text from the language column (e.g. a name) to a stored value. */
+export function parsePastedList(
+  text: string, defaultLanguage: string, resolveLanguage: (s: string) => string = (s) => s,
+): PublicationIdentity[] {
   const rows: PublicationIdentity[] = [];
   for (const line of text.split(/\r\n|\r|\n/)) {
     const [name = '', language = '', variant = ''] = line.split('\t').map((c) => c.trim());
     if (!name) continue;
-    rows.push({ name, language: language || defaultLanguage, variant });
+    rows.push({ name, language: language ? resolveLanguage(language) : defaultLanguage, variant });
   }
   return rows;
 }

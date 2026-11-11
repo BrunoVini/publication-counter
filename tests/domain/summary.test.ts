@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import { addEntry, addPublication, emptyDataset, finishCount, startCount } from '../../src/domain/dataset';
+import { loadLanguages } from '../../src/domain/languages.svelte';
 import { summaryRows } from '../../src/domain/summary';
 
 const mkId = () => { let n = 0; return () => `id${++n}`; };
@@ -70,4 +71,18 @@ test('summary marks an invalid item as attention without breaking the others', (
   const rows = summaryRows(ds, c2.id);
   expect(rows.find((r) => r.publicationId === bad.id)).toMatchObject({ units: null, previous: null, bigChange: false, attention: true });
   expect(rows.find((r) => r.publicationId === good.id)).toMatchObject({ units: 12, previous: 10, attention: false });
+});
+
+test('summary groups and sorts by the displayed language name', async () => {
+  await loadLanguages();
+  const newId = mkId();
+  const ds = emptyDataset('d');
+  // In Portuguese: Espanhol (S) < Inglês (E) < Português (T); the codes sort the other way round.
+  addPublication(ds, pub('A', 'T'), newId);
+  addPublication(ds, pub('B', 'E'), newId);
+  addPublication(ds, pub('C', 'S'), newId);
+  addPublication(ds, pub('D', 'Legacy text'), newId);
+  const c = startCount(ds, 'x', 't', newId);
+  const rows = summaryRows(ds, c.id, 'pt');
+  expect(rows.map((r) => r.language)).toEqual(['Espanhol', 'Inglês', 'Legacy text', 'Português (Brasil)']);
 });

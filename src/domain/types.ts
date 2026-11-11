@@ -21,6 +21,10 @@ export interface CountItem { publicationId: string; sample?: Sample; entries: En
 export interface Count { id: string; startedAt: string; finishedAt?: string; counter: string; items: CountItem[] }
 export interface Settings {
   unit: WeightUnit; scale: ScaleRange[] | null; theme: Theme; language?: Lang;
+  /** Primary publication language code (not the UI language). */
+  pubLanguage?: string;
+  /** Secondary publication language codes. */
+  pubLanguages?: string[];
   locationName?: string; lastCounter?: string; firstRunDone: boolean;
 }
 export interface Dataset { formatVersion: 1; datasetId: string; settings: Settings; publications: Publication[]; counts: Count[] }

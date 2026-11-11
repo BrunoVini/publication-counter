@@ -31,6 +31,8 @@ const schema = v.strictObject({
     scale: v.nullable(v.array(v.strictObject({ upToG: posNum, resolutionG: posNum }))),
     theme: v.picklist(['light', 'dark', 'system']),
     language: v.optional(v.picklist(['pt', 'en', 'es'])),
+    pubLanguage: v.optional(id),
+    pubLanguages: v.optional(v.pipe(v.array(id), v.maxLength(2000))),
     locationName: v.optional(text),
     lastCounter: v.optional(text),
     firstRunDone: v.boolean(),
