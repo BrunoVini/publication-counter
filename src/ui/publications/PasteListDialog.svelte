@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import { app, act } from '../../store/app.svelte';
   import { i18n, t } from '../../i18n/index.svelte';
-  import { addPublication } from '../../domain/dataset';
+  import { addPublication, pubLanguageOf } from '../../domain/dataset';
   import { identityKey, parsePastedList } from '../../domain/text';
   import { languageByName, languageName, loadLanguages } from '../../domain/languages.svelte';
   import LanguageSelect from '../shared/LanguageSelect.svelte';
@@ -17,17 +17,9 @@
   let error = $state('');
   void loadLanguages();
 
-  // The primary language, else the most common one in the catalogue, else empty.
-  function commonLanguage(): string {
-    if (app.ds.settings.pubLanguage) return app.ds.settings.pubLanguage;
-    const n = new Map<string, number>();
-    for (const p of app.ds.publications) if (p.language) n.set(p.language, (n.get(p.language) ?? 0) + 1);
-    return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
-  }
-
   $effect(() => {
     if (open && !dlg.open) {
-      untrack(() => { text = ''; error = ''; language = commonLanguage(); });
+      untrack(() => { text = ''; error = ''; language = pubLanguageOf(app.ds.settings, i18n.lang); });
       dlg.showModal();
     } else if (!open && dlg.open) dlg.close();
   });
@@ -72,7 +64,7 @@
     <p class="muted">{t('form.required')}</p>
     <label class="field">
       <span>{t('pubs.paste.list')} <span aria-hidden="true">*</span></span>
-      <textarea rows="6" bind:value={text} autocomplete="off"></textarea>
+      <textarea rows="6" aria-required="true" bind:value={text} autocomplete="off"></textarea>
     </label>
     <div class="field">
       <span>{t('pubs.paste.language')}</span>

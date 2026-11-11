@@ -32,7 +32,7 @@ function setup(opts: { sample?: Sample; unit?: 'g' | 'kg' } = { sample: SAMPLE }
 }
 const item = () => openCount(app.ds)!.items.find((i) => i.publicationId === 'p')!;
 const panel = () => render(ItemPanel, { countId: 'c1', pubId: 'p' });
-const type = (label: string, value: string) =>
+const type = (label: string | RegExp, value: string) =>
   fireEvent.input(screen.getByLabelText(label), { target: { value } });
 
 beforeEach(() => { i18n.lang = 'en'; app.openItemId = null; app.tab = 'count'; n = 0; });
@@ -117,8 +117,8 @@ describe('item panel', () => {
     setup({ sample: undefined });
     app.ds.settings.scale = [{ upToG: 1000, resolutionG: 1 }];
     panel();
-    await type('Units in the sample', '10');
-    await type('Sample weight (g)', '20');
+    await type(/^Units in the sample/, '10');
+    await type(/^Sample weight \(g\)/, '20');
     expect(screen.getByText(/at least 100 units/)).toBeTruthy();
     await fireEvent.click(screen.getByRole('button', { name: 'Save sample' }));
     expect(item().sample).toEqual({ units: 10, weightG: 20 });
@@ -131,7 +131,7 @@ describe('item panel', () => {
     expect(screen.getByText('Set up your scale')).toBeTruthy();
     await fireEvent.click(screen.getByRole('button', { name: 'Set up later' }));
     expect(app.ds.settings.scale).toBeNull();
-    expect(screen.getByLabelText('Units in the sample')).toBeTruthy();
+    expect(screen.getByLabelText(/^Units in the sample/)).toBeTruthy();
   });
 
   test('redo sample shows old-units warning', async () => {
@@ -139,8 +139,8 @@ describe('item panel', () => {
     setSample(app.ds, 'c1', 'p', SAMPLE, id);
     panel();
     await fireEvent.click(screen.getAllByRole('button', { name: 'Re-weigh sample' })[0]);
-    await type('Units in the sample', '10');
-    await type('Sample weight (g)', '30');
+    await type(/^Units in the sample/, '10');
+    await type(/^Sample weight \(g\)/, '30');
     await fireEvent.click(screen.getByRole('button', { name: 'Save sample' }));
     expect(screen.getByText(/units of the old sample/i)).toBeTruthy();
     expect(item().sample).toEqual({ units: 10, weightG: 30 });
@@ -297,8 +297,8 @@ describe('scale editor', () => {
     setup({ sample: SAMPLE, unit: 'kg' });
     const onsave = vi.fn();
     render(ScaleEditor, { scale: [{ upToG: 1000, resolutionG: 1 }], onsave, oncancel: () => {} });
-    expect((screen.getByLabelText('Up to (kg)') as HTMLInputElement).value).toBe('1');
-    await type('Up to (kg)', '2');
+    expect((screen.getByLabelText(/^Up to \(kg\)/) as HTMLInputElement).value).toBe('1');
+    await type(/^Up to \(kg\)/, '2');
     await fireEvent.click(screen.getByRole('button', { name: 'Save scale' }));
     expect(onsave).toHaveBeenCalledWith([{ upToG: 2000, resolutionG: 1 }]);
   });

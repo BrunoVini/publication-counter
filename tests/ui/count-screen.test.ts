@@ -52,7 +52,7 @@ describe('count screen', () => {
     app.ds = dataset();
     render(CountScreen);
     await fireEvent.click(screen.getByRole('button', { name: 'New count' }));
-    const input = screen.getByLabelText('Who is counting?') as HTMLInputElement;
+    const input = screen.getByLabelText(/^Who is counting/) as HTMLInputElement;
     expect(input.value).toBe('Ana');
     await fireEvent.input(input, { target: { value: '   ' } });
     await fireEvent.click(screen.getByRole('button', { name: 'Start' }));

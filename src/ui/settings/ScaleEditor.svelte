@@ -38,11 +38,12 @@
 <form class="scale" onsubmit={(e) => { e.preventDefault(); save(); }}>
   <h3>{t('scale.title')}</h3>
   <p>{t('scale.help')}</p>
+  <p class="muted">{t('form.required')}</p>
   {#each rows as row, i (i)}
     <fieldset>
       <legend>{t('scale.row', { n: i + 1 })}</legend>
-      <label>{t('scale.upTo', { unit })}<input type="text" inputmode="decimal" bind:value={row.upTo} /></label>
-      <label>{t('scale.resolution', { unit })}<input type="text" inputmode="decimal" bind:value={row.res} /></label>
+      <label>{t('scale.upTo', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={row.upTo} /></label>
+      <label>{t('scale.resolution', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={row.res} /></label>
       <button type="button" aria-label={t('scale.removeRow', { n: i + 1 })} onclick={() => rows.splice(i, 1)}>×</button>
     </fieldset>
   {/each}
@@ -63,5 +64,6 @@
   button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
   .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
   .actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .muted { margin: 0; color: var(--muted); }
   .bad { margin: 0; color: var(--bad); }
 </style>

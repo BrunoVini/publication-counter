@@ -188,9 +188,10 @@
   <dialog use:modal aria-labelledby="who-title" oncancel={(e) => { e.preventDefault(); asking = false; }}>
     <form class="content" onsubmit={confirmName}>
       <h2 id="who-title" class="visually-hidden">{t('count.new')}</h2>
+      <p class="muted">{t('form.required')}</p>
       <label class="field">
-        <span>{t('count.who')}</span>
-        <input maxlength="200" bind:value={name} autocomplete="off" aria-invalid={nameError} aria-describedby={nameError ? 'who-err' : undefined} />
+        <span>{t('count.who')} <span aria-hidden="true">*</span></span>
+        <input maxlength="200" aria-required="true" bind:value={name} autocomplete="off" aria-invalid={nameError} aria-describedby={nameError ? 'who-err' : undefined} />
       </label>
       {#if nameError}<p id="who-err" role="alert" class="err">{t('count.who.required')}</p>{/if}
       <div class="actions">

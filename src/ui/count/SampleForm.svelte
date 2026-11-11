@@ -64,8 +64,9 @@
 {:else}
   <form class="form" onsubmit={(e) => { e.preventDefault(); save(); }}>
     <h3>{t('sample.title')}</h3>
-    <label>{t('sample.units')}<input type="text" inputmode="numeric" bind:value={unitsText} /></label>
-    <label>{t('sample.weight', { unit })}<input type="text" inputmode="decimal" bind:value={weightText} /></label>
+    <p class="muted">{t('form.required')}</p>
+    <label>{t('sample.units')} <span aria-hidden="true">*</span><input type="text" inputmode="numeric" aria-required="true" bind:value={unitsText} /></label>
+    <label>{t('sample.weight', { unit })} <span aria-hidden="true">*</span><input type="text" inputmode="decimal" aria-required="true" bind:value={weightText} /></label>
     <p class="advice" aria-live="polite">
       {#if advice}{advice.ok ? t('sample.adviceOk') : t('sample.advice', { n: advice.suggestedUnits })}{/if}
     </p>
@@ -98,6 +99,7 @@
   .actions, .copy { display: flex; gap: 8px; align-items: end; }
   .copy label { flex: 1; }
   .actions { justify-content: flex-end; }
+  .muted { margin: 0; color: var(--muted); }
   .advice { margin: 0; min-height: 1.4em; color: var(--muted); }
   .bad { margin: 0; color: var(--bad); }
 </style>
