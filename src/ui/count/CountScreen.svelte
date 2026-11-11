@@ -104,9 +104,11 @@
       const i = visible.findIndex((r) => r.pub.id === selectedId);
       const next = e.key === 'ArrowDown' ? Math.min(i + 1, visible.length - 1) : Math.max(i - 1, 0);
       selectedId = visible[Math.max(next, 0)].pub.id;
-    } else if (e.key === 'Enter' && selectedId && (el === search || !(el instanceof HTMLElement) || el === document.body)) {
+    } else if (e.key === 'Enter' && (el === search || !(el instanceof HTMLElement) || el === document.body)) {
       e.preventDefault();
-      app.openItemId = selectedId;
+      // NOTE: the selection may have been filtered out; only a visible item is opened.
+      const target = visible.find((r) => r.pub.id === selectedId) ?? visible[0];
+      if (target) app.openItemId = target.pub.id;
     }
   }
 </script>

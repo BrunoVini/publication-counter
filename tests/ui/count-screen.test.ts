@@ -133,4 +133,20 @@ describe('count screen', () => {
     await fireEvent.keyDown(window, { key: '/' });
     expect(document.activeElement).toBe(screen.getByRole('searchbox'));
   });
+
+  test('Enter opens only a visible item: first match when the selection is filtered out, nothing when empty', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: true, media: q, addEventListener() {}, removeEventListener() {} }));
+    app.ds = withOpenCount();
+    render(CountScreen);
+    flushSync();
+    await fireEvent.keyDown(window, { key: 'ArrowDown' }); // selects 'a'
+    const search = screen.getByRole('searchbox');
+    await fireEvent.input(search, { target: { value: 'sentinela' } });
+    await fireEvent.keyDown(search, { key: 'Enter' });
+    expect(app.openItemId).toBe('b');
+    app.openItemId = null;
+    await fireEvent.input(search, { target: { value: 'zzzz' } });
+    await fireEvent.keyDown(search, { key: 'Enter' });
+    expect(app.openItemId).toBeNull();
+  });
 });
