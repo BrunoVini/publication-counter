@@ -28,7 +28,7 @@ const withOpenCount = (): Dataset => {
   return ds;
 };
 
-beforeEach(() => { i18n.lang = 'en'; app.openItemId = null; app.summaryCountId = null; app.pubDraftName = null; app.tab = 'count'; });
+beforeEach(() => { i18n.lang = 'en'; app.openItemId = null; app.summaryCountId = null; app.pubDraftName = null; app.onlyNotCounted = false; app.tab = 'count'; });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('count screen', () => {

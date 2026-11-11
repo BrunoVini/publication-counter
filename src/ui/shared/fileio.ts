@@ -34,7 +34,7 @@ export function pickTextFile(accept: string): Promise<string | null> {
 }
 
 /** Shares the file through the system sheet when possible, else downloads it. */
-export async function shareOrDownload(name: string, text: string, mime: string): Promise<void> {
+export async function shareOrDownload(name: string, text: string | Blob, mime: string): Promise<void> {
   const file = new File([text], name, { type: mime });
   if (navigator.canShare?.({ files: [file] })) {
     try {

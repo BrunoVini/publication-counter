@@ -51,3 +51,23 @@ test('summary sorts by variant on ties and previous is null when earlier count l
   expect(rows.find((r) => r.publicationId === late.id)).toMatchObject({ previous: null, bigChange: false });
   expect(v2.variant).toBe('b');
 });
+
+test('summary marks an invalid item as attention without breaking the others', () => {
+  const newId = mkId();
+  const ds = emptyDataset('d');
+  const good = addPublication(ds, pub('Good'), newId);
+  const bad = addPublication(ds, pub('Bad'), newId);
+  const c1 = startCount(ds, 'x', '2026-01-01', newId);
+  addEntry(ds, c1.id, good.id, { kind: 'hand', units: 10 }, newId);
+  addEntry(ds, c1.id, bad.id, { kind: 'hand', units: 10 }, newId);
+  finishCount(ds, c1.id, '2026-01-02');
+  const c2 = startCount(ds, 'x', '2026-02-01', newId);
+  addEntry(ds, c2.id, good.id, { kind: 'hand', units: 12 }, newId);
+  addEntry(ds, c2.id, bad.id, { kind: 'hand', units: 5 }, newId);
+  // corrupt the data behind the domain's validation (e.g. a hand-edited file)
+  c2.items.find((i) => i.publicationId === bad.id)!.entries = [{ id: 'z', kind: 'hand', units: -3 }];
+  c1.items.find((i) => i.publicationId === bad.id)!.entries = [{ id: 'y', kind: 'hand', units: 0 }];
+  const rows = summaryRows(ds, c2.id);
+  expect(rows.find((r) => r.publicationId === bad.id)).toMatchObject({ units: null, previous: null, bigChange: false, attention: true });
+  expect(rows.find((r) => r.publicationId === good.id)).toMatchObject({ units: 12, previous: 10, attention: false });
+});

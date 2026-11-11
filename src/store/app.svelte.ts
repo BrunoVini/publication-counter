@@ -13,6 +13,8 @@ export const app = $state({
   summaryCountId: null as string | null,
   // NOTE: set by "Create '<text>'" in the count search; the publications tab consumes it.
   pubDraftName: null as string | null,
+  // NOTE: the count list's "only not counted" filter; the Summary sets it to jump to the uncounted items.
+  onlyNotCounted: false,
 });
 
 let chain: Promise<unknown> = Promise.resolve();

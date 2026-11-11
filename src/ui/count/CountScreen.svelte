@@ -25,7 +25,6 @@
   );
 
   let query = $state('');
-  let onlyUncounted = $state(false);
   let selectedId = $state<string | null>(null);
   let asking = $state(false);
   let name = $state('');
@@ -58,7 +57,7 @@
       return [{ item, pub, status: statusOf(item) }];
     });
   });
-  const visible = $derived(onlyUncounted ? rows.filter((r) => !isDone(r.item)) : rows);
+  const visible = $derived(app.onlyNotCounted ? rows.filter((r) => !isDone(r.item) || r.status.kind === 'attention') : rows);
   const done = $derived(count ? count.items.filter(isDone).length : 0);
 
   function begin() {
@@ -74,7 +73,7 @@
       act((ds) => startCount(ds, counter, new Date().toISOString(), () => crypto.randomUUID()));
       asking = false;
       app.openItemId = null;
-      query = ''; onlyUncounted = false; selectedId = null;
+      query = ''; app.onlyNotCounted = false; selectedId = null;
     } catch {
       showToast(t('count.err.start'));
     }
@@ -139,7 +138,7 @@
         <span>{t('count.search')}</span>
         <input type="search" bind:this={search} bind:value={query} autocomplete="off" />
       </label>
-      <label class="check"><input type="checkbox" bind:checked={onlyUncounted} /> {t('count.onlyUncounted')}</label>
+      <label class="check"><input type="checkbox" bind:checked={app.onlyNotCounted} /> {t('count.onlyUncounted')}</label>
 
       {#if count.items.length === 0}
         <p class="muted">{t('count.noPubs')}</p>
