@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { addEntry, addPublication, emptyDataset, finishCount, startCount } from '../../src/domain/dataset';
+import { addEntry, addPublication, deletePublication, emptyDataset, finishCount, startCount } from '../../src/domain/dataset';
 import { loadLanguages } from '../../src/domain/languages.svelte';
 import { summaryRows } from '../../src/domain/summary';
 
@@ -85,4 +85,18 @@ test('summary groups and sorts by the displayed language name', async () => {
   const c = startCount(ds, 'x', 't', newId);
   const rows = summaryRows(ds, c.id, 'pt');
   expect(rows.map((r) => r.language)).toEqual(['Espanhol', 'Inglês', 'Legacy text', 'Português (Brasil)']);
+});
+
+test('previous matches by identity after a publication is deleted and re-added', () => {
+  const newId = mkId();
+  const ds = emptyDataset('d');
+  const a = addPublication(ds, pub('A'), newId);
+  const c1 = startCount(ds, 'x', '2026-01-01', newId);
+  addEntry(ds, c1.id, a.id, { kind: 'hand', units: 100 }, newId);
+  finishCount(ds, c1.id, '2026-01-02');
+  deletePublication(ds, a.id);
+  const a2 = addPublication(ds, pub('A'), newId);
+  const c2 = startCount(ds, 'x', '2026-02-01', newId);
+  addEntry(ds, c2.id, a2.id, { kind: 'hand', units: 10 }, newId);
+  expect(summaryRows(ds, c2.id)[0]).toMatchObject({ units: 10, previous: 100, bigChange: true });
 });

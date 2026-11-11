@@ -1,5 +1,6 @@
 import { itemTotal } from './calc';
 import { languageName } from './languages.svelte';
+import { identityKey } from './text';
 import type { Dataset, Lang } from './types';
 
 export interface SummaryRow {
@@ -28,7 +29,9 @@ export function summaryRows(ds: Dataset, countId: string, lang: Lang = 'en'): Su
   const rows = count.items.map((item): SummaryRow => {
     const pub = ds.publications.find((p) => p.id === item.publicationId) ?? item.snapshot;
     const { units, bad } = safeUnits(item, scale);
-    const prevItem = prev?.items.find((i) => i.publicationId === item.publicationId);
+    // NOTE: a deleted and re-added publication has a new id; its old item only keeps the snapshot.
+    const prevItem = prev?.items.find((i) => i.publicationId === item.publicationId)
+      ?? (pub ? prev?.items.find((i) => i.snapshot && identityKey(i.snapshot) === identityKey(pub)) : undefined);
     const previous = prevItem ? safeUnits(prevItem, scale).units : null;
     const bigChange = units !== null && previous !== null && previous > 0
       && Math.abs(units - previous) / previous > BIG_CHANGE;
