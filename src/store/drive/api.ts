@@ -45,8 +45,8 @@ async function call(token: string, url: string, init: RequestInit = {}): Promise
   return res;
 }
 
-const list = async (token: string, q: string, fields: string) => {
-  const res = await call(token, `${FILES}?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(`files(${fields})`)}&pageSize=1`);
+const list = async (token: string, q: string, fields: string, order = '') => {
+  const res = await call(token, `${FILES}?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(`files(${fields})`)}&pageSize=1${order}`);
   return ((await res.json()).files ?? []) as DriveMeta[];
 };
 
@@ -67,6 +67,12 @@ export async function findFile(token: string, datasetId: string): Promise<DriveM
   return (await list(token, q, FIELDS))[0] ?? null;
 }
 
+/** Newest file in the app folder; lets a fresh install (new datasetId) find an existing backup. */
+export async function findLatestInFolder(token: string, folderId: string): Promise<DriveMeta | null> {
+  const q = `'${esc(folderId)}' in parents and trashed=false`;
+  return (await list(token, q, FIELDS, '&orderBy=modifiedTime%20desc'))[0] ?? null;
+}
+
 export async function getMeta(token: string, id: string): Promise<DriveMeta> {
   return (await call(token, `${FILES}/${encodeURIComponent(id)}?fields=${FIELDS}`)).json();
 }
@@ -79,26 +85,19 @@ export async function upload(
   token: string,
   a: { id?: string; folderId: string; name: string; datasetId: string; body: string },
 ): Promise<DriveMeta> {
-  if (a.id) {
-    // NOTE: media-only update keeps the existing name and appProperties.
-    const res = await call(token, `${UPLOAD}/${encodeURIComponent(a.id)}?uploadType=media&fields=${FIELDS}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: a.body,
-    });
-    return res.json();
-  }
   const metadata = {
-    name: a.name,
-    parents: [a.folderId],
+    ...(a.id ? {} : { name: a.name }),
+    ...(a.id ? {} : { parents: [a.folderId] }),
     mimeType: 'application/json',
     appProperties: { pubcountDatasetId: a.datasetId },
   };
   const body =
     `--${BOUNDARY}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
     `--${BOUNDARY}\r\nContent-Type: application/json\r\n\r\n${a.body}\r\n--${BOUNDARY}--`;
-  const res = await call(token, `${UPLOAD}?uploadType=multipart&fields=${FIELDS}`, {
-    method: 'POST',
+  // NOTE: updates go through multipart too so appProperties.pubcountDatasetId is refreshed to the local id.
+  const url = a.id ? `${UPLOAD}/${encodeURIComponent(a.id)}` : UPLOAD;
+  const res = await call(token, `${url}?uploadType=multipart&fields=${FIELDS}`, {
+    method: a.id ? 'PATCH' : 'POST',
     headers: { 'Content-Type': `multipart/related; boundary=${BOUNDARY}` },
     body,
   });

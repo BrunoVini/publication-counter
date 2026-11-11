@@ -48,8 +48,7 @@ const local = (): Dataset => $state.snapshot(app.ds) as Dataset;
 const summary = (ds: Dataset, modifiedAt: string): Summary =>
   ({ modifiedAt, hasOpenCount: ds.counts.some((c) => !c.finishedAt), publications: ds.publications.length });
 
-async function store(meta: DriveMeta): Promise<void> {
-  const lastSyncAt = new Date().toISOString();
+async function store(meta: DriveMeta, lastSyncAt = new Date().toISOString()): Promise<void> {
   st = { fileId: meta.id, version: meta.version, lastSyncAt, connected: true };
   drive.lastSyncAt = lastSyncAt;
   drive.conflict = null;
@@ -80,25 +79,31 @@ async function fetchRemote(token: string, id: string): Promise<Dataset> {
   return r.dataset;
 }
 
-async function uploadLocal(token: string, id?: string): Promise<DriveMeta> {
+async function uploadLocal(token: string, id?: string): Promise<{ meta: DriveMeta; at: string }> {
   const api = await loadApi();
+  // NOTE: stamped before the snapshot so a save made during the upload is never older than lastSyncAt.
+  const at = new Date().toISOString();
   const ds = local();
   // NOTE: the name is only used on create; updates keep the existing Drive name.
-  return api.upload(token, {
+  const meta = await api.upload(token, {
     id,
     folderId: id ? '' : await api.ensureFolder(token),
     name: `${exportBaseName(ds)}.pubcount`,
     datasetId: ds.datasetId,
     body: serializeDataset(ds),
   });
+  return { meta, at };
 }
+
+const storeUpload = ({ meta, at }: { meta: DriveMeta; at: string }) => store(meta, at);
 
 /** Local and remote both exist: link when equal, otherwise open the conflict. Never uploads. */
 async function compare(remote: Dataset, meta: DriveMeta): Promise<void> {
+  const at = new Date().toISOString();
   const ds = local();
   // NOTE: the remote went through the schema parser, so local is normalised the same way (key order).
   const norm = parseDataset(serializeDataset(ds));
-  if (norm.ok && serializeDataset(norm.dataset) === serializeDataset(remote)) return store(meta);
+  if (norm.ok && serializeDataset(norm.dataset) === serializeDataset(remote)) return store(meta, at);
   drive.conflict = {
     remote,
     remoteMeta: meta,
@@ -111,8 +116,9 @@ async function compare(remote: Dataset, meta: DriveMeta): Promise<void> {
 async function link(token: string): Promise<void> {
   const api = await loadApi();
   const ds = local();
-  const meta = await api.findFile(token, ds.datasetId);
-  if (!meta) return store(await uploadLocal(token));
+  // NOTE: a fresh install has its own datasetId, so fall back to the newest backup in the app folder.
+  const meta = (await api.findFile(token, ds.datasetId)) ?? (await api.findLatestInFolder(token, await api.ensureFolder(token)));
+  if (!meta) return storeUpload(await uploadLocal(token));
   const remote = await fetchRemote(token, meta.id);
   if (ds.publications.length === 0) {
     await replaceDataset(remote, 'drive restore');
@@ -164,7 +170,7 @@ export function syncNow(): Promise<void> {
       } catch (e) {
         if ((e as { kind?: string })?.kind !== 'notFound') throw e;
         // NOTE: the file was deleted on Drive; recreate it from the local data.
-        return store(await uploadLocal(token));
+        return storeUpload(await uploadLocal(token));
       }
       if (meta.version !== st.version) return compare(await fetchRemote(token, meta.id), meta);
       // NOTE: nothing saved since the last sync and the remote is unchanged: nothing to upload.
@@ -175,7 +181,7 @@ export function syncNow(): Promise<void> {
       }
       // NOTE: a change on another device between getMeta and this upload can still be overwritten;
       // accepted, there is no If-Match on the upload.
-      return store(await uploadLocal(token, st.fileId));
+      return storeUpload(await uploadLocal(token, st.fileId));
     });
   });
 }
@@ -196,7 +202,7 @@ export function resolveConflict(choice: 'device' | 'drive'): Promise<void> {
       const now = await api.getMeta(token, c.remoteMeta.id);
       if (now.version !== c.remoteMeta.version) return compare(await fetchRemote(token, now.id), now);
       if (!(await pushBackup(c.remote, 'drive conflict'))) throw 'backupFailed';
-      return store(await uploadLocal(token, c.remoteMeta.id));
+      return storeUpload(await uploadLocal(token, c.remoteMeta.id));
     });
   });
 }
@@ -244,8 +250,8 @@ export function scheduleSync(): void {
 export async function initDrive(): Promise<void> {
   // NOTE: read here (not via gis.ts) so the Drive chunk is not fetched for users who never connect.
   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) { drive.status = 'notConfigured'; return; }
-  void warmDrive();
   st = await loadDriveState();
+  if (st.connected) void warmDrive();
   drive.lastSyncAt = st.lastSyncAt ?? null;
   drive.status = st.connected ? 'expired' : 'off';
 }

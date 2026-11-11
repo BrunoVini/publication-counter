@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DriveError, ensureFolder, findFile, upload } from '../../src/store/drive/api';
+import { DriveError, ensureFolder, findFile, findLatestInFolder, upload } from '../../src/store/drive/api';
 
 const meta = { id: 'f1', version: '3', modifiedTime: '2026-01-01T00:00:00Z' };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
@@ -64,14 +64,26 @@ describe('drive api', () => {
     expect(init.body).toContain('{"x":1}');
   });
 
-  it('upload with id patches media only', async () => {
+  it('upload with id patches multipart and refreshes appProperties without renaming', async () => {
     const f = mock(json(meta));
     await upload('tok', { id: 'f1', folderId: 'fold', name: 'a.pubcount', datasetId: 'ds1', body: '{"x":1}' });
     const [url, init] = f.mock.calls[0];
-    expect(url).toBe('https://www.googleapis.com/upload/drive/v3/files/f1?uploadType=media&fields=id,version,modifiedTime');
+    expect(url).toBe('https://www.googleapis.com/upload/drive/v3/files/f1?uploadType=multipart&fields=id,version,modifiedTime');
     expect(init.method).toBe('PATCH');
-    expect(headers(init)['Content-Type']).toBe('application/json');
-    expect(init.body).toBe('{"x":1}');
+    expect(headers(init)['Content-Type']).toMatch(/^multipart\/related; boundary=.+/);
+    expect(init.body).toContain('"appProperties":{"pubcountDatasetId":"ds1"}');
+    expect(init.body).not.toContain('"name"');
+    expect(init.body).not.toContain('"parents"');
+    expect(init.body).toContain('{"x":1}');
+  });
+
+  it('findLatestInFolder lists the newest file in the folder', async () => {
+    const f = mock(json({ files: [meta] }));
+    expect(await findLatestInFolder('tok', 'fold')).toEqual(meta);
+    const url = decodeURIComponent(f.mock.calls[0][0]);
+    expect(url).toContain("q='fold' in parents and trashed=false");
+    expect(url).toContain('orderBy=modifiedTime desc');
+    expect(url).toContain('pageSize=1');
   });
 
   it('maps errors to kinds', async () => {

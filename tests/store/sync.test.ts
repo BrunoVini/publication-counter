@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createStore, entries } from 'idb-keyval';
 
 const api = vi.hoisted(() => ({
-  ensureFolder: vi.fn(), findFile: vi.fn(), getMeta: vi.fn(), download: vi.fn(), upload: vi.fn(),
+  ensureFolder: vi.fn(), findFile: vi.fn(), findLatestInFolder: vi.fn(), getMeta: vi.fn(), download: vi.fn(), upload: vi.fn(),
 }));
 const gis = vi.hoisted(() => ({
   requestToken: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('../../src/store/drive/gis', () => gis);
 
 import { setStore, listBackups, loadDriveState } from '../../src/store/persist';
 import { app, flushSaves } from '../../src/store/app.svelte';
-import { connect, disconnect, drive, warmDrive, reconnect, resolveConflict, syncNow } from '../../src/store/sync.svelte';
+import { connect, disconnect, drive, initDrive, warmDrive, reconnect, resolveConflict, syncNow } from '../../src/store/sync.svelte';
 import { addPublication, emptyDataset } from '../../src/domain/dataset';
 import { serializeDataset } from '../../src/domain/file';
 import { DriveError } from '../../src/store/drive/api';
@@ -41,6 +41,7 @@ beforeEach(async () => {
   gis.requestToken.mockResolvedValue({ token: TOKEN, expiresAt: Date.now() + 3_600_000 });
   api.ensureFolder.mockResolvedValue('folder');
   api.upload.mockResolvedValue(meta('2'));
+  api.findLatestInFolder.mockResolvedValue(null);
 });
 
 const localWithData = () => { app.ds = withPub('d1', 'Book A'); return JSON.parse(JSON.stringify(app.ds)); };
@@ -49,7 +50,7 @@ const remoteJson = (ds: unknown) => serializeDataset(ds as never);
 describe('drive sync', () => {
   it('connect with no remote uploads local', async () => {
     localWithData();
-    api.findFile.mockResolvedValue(null);
+    api.findFile.mockImplementation(async () => null);
     await connect();
     expect(api.upload).toHaveBeenCalledOnce();
     expect(api.upload.mock.calls[0][1]).toMatchObject({ datasetId: 'd1', name: 'pubcount.pubcount', folderId: 'folder' });
@@ -60,7 +61,7 @@ describe('drive sync', () => {
 
   it('connect with empty local restores remote', async () => {
     const remote = withPub('d1', 'Remote');
-    api.findFile.mockResolvedValue(meta('5'));
+    api.findFile.mockImplementation(async (_t: string, id: string) => (id === 'd1' ? meta('5') : null));
     api.download.mockResolvedValue(remoteJson(remote));
     await connect();
     await flushSaves();
@@ -72,7 +73,7 @@ describe('drive sync', () => {
 
   it('connect with both differing opens conflict and uploads nothing', async () => {
     localWithData();
-    api.findFile.mockResolvedValue(meta('5'));
+    api.findFile.mockImplementation(async (_t: string, id: string) => (id === 'd1' ? meta('5') : null));
     api.download.mockResolvedValue(remoteJson(withPub('d1', 'Remote')));
     await connect();
     expect(drive.status).toBe('conflict');
@@ -82,7 +83,7 @@ describe('drive sync', () => {
 
   it('connect with equal data links the file without uploading', async () => {
     const ds = localWithData();
-    api.findFile.mockResolvedValue(meta('5'));
+    api.findFile.mockImplementation(async (_t: string, id: string) => (id === 'd1' ? meta('5') : null));
     api.download.mockResolvedValue(remoteJson(ds));
     await connect();
     expect(drive.status).toBe('idle');
@@ -92,7 +93,7 @@ describe('drive sync', () => {
 
   async function linked() {
     localWithData();
-    api.findFile.mockResolvedValue(null);
+    api.findFile.mockImplementation(async () => null);
     await connect();
     api.upload.mockClear();
   }
@@ -176,7 +177,7 @@ describe('drive sync', () => {
   });
 
   it('invalid remote never replaces local', async () => {
-    api.findFile.mockResolvedValue(meta('5'));
+    api.findFile.mockImplementation(async (_t: string, id: string) => (id === 'd1' ? meta('5') : null));
     for (const body of ['not json', JSON.stringify({ formatVersion: 99 }), '{"formatVersion":1}']) {
       api.download.mockResolvedValue(body);
       await connect();
@@ -196,7 +197,7 @@ describe('drive sync', () => {
 
   it('token never persisted', async () => {
     localWithData();
-    api.findFile.mockResolvedValue(null);
+    api.findFile.mockImplementation(async () => null);
     await connect();
     await flushSaves();
     expect(JSON.stringify(await entries(store))).not.toContain(TOKEN);
@@ -232,7 +233,7 @@ describe('drive sync', () => {
     expect(gis.preloadGis).toHaveBeenCalled();
     gis.requestToken.mockClear();
     localWithData();
-    api.findFile.mockResolvedValue(null);
+    api.findFile.mockImplementation(async () => null);
     const p = connect();
     expect(gis.requestToken).toHaveBeenCalledOnce();
     await p;
@@ -274,5 +275,59 @@ describe('drive sync', () => {
     app.lastSavedAt = '2999-01-01T00:00:00.000Z';
     await syncNow();
     expect(api.upload).toHaveBeenCalledOnce();
+  });
+
+  it('fresh device with another datasetId restores the folder backup when local is empty', async () => {
+    api.findFile.mockImplementation(async (_t: string, id: string) => (id === 'remote-id' ? meta('5') : null));
+    api.findLatestInFolder.mockResolvedValue(meta('5'));
+    api.download.mockResolvedValue(remoteJson(withPub('remote-id', 'Remote')));
+    await connect();
+    await flushSaves();
+    expect(api.findLatestInFolder).toHaveBeenCalledWith(TOKEN, 'folder');
+    expect(app.ds.datasetId).toBe('remote-id');
+    expect(app.ds.publications[0].name).toBe('Remote');
+    expect(api.upload).not.toHaveBeenCalled();
+    expect((await loadDriveState()).fileId).toBe('f1');
+  });
+
+  it('fresh device with another datasetId and local data opens a conflict', async () => {
+    localWithData();
+    api.findFile.mockImplementation(async (_t: string, id: string) => (id === 'remote-id' ? meta('5') : null));
+    api.findLatestInFolder.mockResolvedValue(meta('5'));
+    api.download.mockResolvedValue(remoteJson(withPub('remote-id', 'Remote')));
+    await connect();
+    expect(drive.status).toBe('conflict');
+    expect(api.upload).not.toHaveBeenCalled();
+  });
+
+  it('a save during the upload is uploaded by the next sync', async () => {
+    await linked();
+    api.getMeta.mockResolvedValue(meta('2'));
+    app.lastSavedAt = '2999-01-01T00:00:00.000Z';
+    let done!: (m: ReturnType<typeof meta>) => void;
+    api.upload.mockReturnValueOnce(new Promise((r) => { done = r; }));
+    const first = syncNow();
+    await vi.waitFor(() => expect(api.upload).toHaveBeenCalled());
+    app.lastSavedAt = new Date().toISOString();
+    await new Promise((r) => setTimeout(r, 5));
+    done(meta('3'));
+    await first;
+    api.getMeta.mockResolvedValue(meta('3'));
+    api.upload.mockResolvedValue(meta('4'));
+    await syncNow();
+    expect(api.upload).toHaveBeenCalledTimes(2);
+  });
+
+  it('initDrive warms Google only when a link is saved', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'cid');
+    await initDrive();
+    await Promise.resolve();
+    expect(gis.preloadGis).not.toHaveBeenCalled();
+    localWithData();
+    api.findFile.mockImplementation(async () => null);
+    await connect();
+    await initDrive();
+    await vi.waitFor(() => expect(gis.preloadGis).toHaveBeenCalled());
+    vi.unstubAllEnvs();
   });
 });
