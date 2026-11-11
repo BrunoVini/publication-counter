@@ -1,0 +1,7 @@
+{
+  "app.name": "PubCount",
+  "count.progress": "{done} of {total}",
+  "nav.count": "Count",
+  "nav.publications": "Publications",
+  "nav.settings": "Settings"
+}
