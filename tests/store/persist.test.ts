@@ -9,6 +9,7 @@ vi.mock('idb-keyval', async (orig) => {
 
 import { getCorrupt, listBackups, loadDataset, pushBackup, saveDataset, setStore } from '../../src/store/persist';
 import { act, app, flushSaves, init, replaceDataset } from '../../src/store/app.svelte';
+import { i18n } from '../../src/i18n/index.svelte';
 import { addEntry, addPublication, emptyDataset, startCount } from '../../src/domain/dataset';
 
 let n = 0;
@@ -107,6 +108,18 @@ describe('app', () => {
     expect(b[0].reason).toBe('import');
     expect(b[0].dataset.datasetId).toBe(prev);
     expect((await loadDataset())?.datasetId).toBe('next');
+  });
+
+  it('replaceDataset re-applies the incoming language and theme', async () => {
+    await init();
+    i18n.lang = 'en';
+    await replaceDataset(emptyDataset('next', { language: 'es', theme: 'dark' }), 'import');
+    expect(i18n.lang).toBe('es');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(document.documentElement.lang).toBe('es');
+    await replaceDataset(emptyDataset('next2', { theme: 'system' }), 'import');
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    i18n.lang = 'en';
   });
 
   it('read error leaves stored data untouched and does not save', async () => {

@@ -1,3 +1,5 @@
+import { detectLang, i18n } from '../i18n/index.svelte';
+import { applyTheme } from '../ui/theme';
 import { validateDataset } from '../domain/file';
 import { emptyDataset } from '../domain/dataset';
 import type { Dataset } from '../domain/types';
@@ -69,10 +71,18 @@ export function act<T>(fn: (ds: Dataset) => T): T {
   return result;
 }
 
+// NOTE: language and theme live in the dataset, so a replaced dataset must re-apply them.
+function applyPreferences(ds: Dataset): void {
+  i18n.lang = ds.settings.language ?? detectLang(typeof navigator !== 'undefined' ? (navigator.languages ?? []) : []);
+  if (typeof document !== 'undefined') document.documentElement.lang = i18n.lang;
+  applyTheme(ds.settings.theme);
+}
+
 export async function replaceDataset(next: Dataset, reason: string): Promise<void> {
   const snap = $state.snapshot(app.ds) as Dataset;
   if (!(await enqueue(() => pushBackup(snap, reason)))) throw 'backupFailed';
   app.ds = next;
+  applyPreferences(next);
   save();
   await flushSaves();
 }
