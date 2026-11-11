@@ -11,7 +11,8 @@
 <div class="shell">
   <header class="no-print">
     <strong>{t('app.name')}</strong>
-    <span class="save" role="status" aria-label={t('save.label')}>
+    <!-- NOTE: while the alert banner is shown it is the only live announcement. -->
+    <span class="save" role={app.saveState === 'unavailable' ? undefined : 'status'}>
       <span aria-hidden="true">{app.saveState === 'saved' ? '✓' : app.saveState === 'saving' ? '…' : '!'}</span>
       {t(`save.${app.saveState}`)}
     </span>

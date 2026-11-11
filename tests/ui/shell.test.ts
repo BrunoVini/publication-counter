@@ -36,12 +36,17 @@ describe('shell', () => {
     app.saveState = 'unavailable';
     render(App);
     expect(screen.getByRole('alert').textContent).toMatch(/not being saved/i);
-    expect(screen.getByRole('status', { name: /save/i }).textContent).toMatch(/not saved/i);
+    expect(screen.getByText(/not saved/i)).toBeTruthy();
+    // NOTE: only the banner announces while it is shown.
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
-  test('no banner while saved', () => {
+  test('no banner while saved; status text is its own name', () => {
     render(App);
     expect(screen.queryByRole('alert')).toBeNull();
+    const st = screen.getByRole('status');
+    expect(st.hasAttribute('aria-label')).toBe(false);
+    expect(st.textContent).toMatch(/saved/i);
   });
 
   test('toast is announced politely and replaced by the next one', async () => {
@@ -55,6 +60,15 @@ describe('shell', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(fn).toHaveBeenCalledOnce();
   });
+});
+
+test('dismissing the toast removes it', async () => {
+  render(App);
+  showToast('Bye');
+  flushSync();
+  expect(screen.getByText('Bye')).toBeTruthy();
+  await fireEvent.click(screen.getByRole('button', { name: 'Dismiss message' }));
+  expect(screen.queryByText('Bye')).toBeNull();
 });
 
 describe('applyTheme', () => {
@@ -77,5 +91,27 @@ describe('ConfirmDialog', () => {
     expect(oncancel).toHaveBeenCalledOnce();
     await fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(onconfirm).toHaveBeenCalledOnce();
+  });
+
+  describe('dismissal', () => {
+    const mk = () => {
+      const oncancel = vi.fn();
+      const { container } = render(ConfirmDialog, { open: true, title: 'T', message: 'Msg', confirmLabel: 'OK', onconfirm: vi.fn(), oncancel });
+      return { oncancel, dlg: container.querySelector('dialog')! };
+    };
+    test('Esc (cancel event) calls oncancel', async () => {
+      const { oncancel, dlg } = mk();
+      const ev = new Event('cancel', { cancelable: true });
+      dlg.dispatchEvent(ev);
+      expect(ev.defaultPrevented).toBe(true);
+      expect(oncancel).toHaveBeenCalledOnce();
+    });
+    test('backdrop click cancels, click inside does not', async () => {
+      const { oncancel, dlg } = mk();
+      await fireEvent.click(screen.getByText('Msg'));
+      expect(oncancel).not.toHaveBeenCalled();
+      await fireEvent.click(dlg);
+      expect(oncancel).toHaveBeenCalledOnce();
+    });
   });
 });

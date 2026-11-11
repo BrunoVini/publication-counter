@@ -13,4 +13,8 @@ async function start(): Promise<void> {
   mount(App, { target: document.getElementById('app')! })
 }
 
-void start()
+start().catch(() => {
+  // NOTE: i18n may not be loaded here, so the message is static (en + pt).
+  const el = document.getElementById('app')
+  if (el) el.textContent = 'PubCount could not start. Reload the page. / O PubCount não conseguiu iniciar. Recarregue a página.'
+})
