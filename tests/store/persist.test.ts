@@ -1,0 +1,76 @@
+import 'fake-indexeddb/auto';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createStore, set } from 'idb-keyval';
+
+vi.mock('idb-keyval', async (orig) => {
+  const real = await orig<typeof import('idb-keyval')>();
+  return { ...real, set: vi.fn(real.set) };
+});
+
+import { listBackups, loadDataset, pushBackup, saveDataset, setStore } from '../../src/store/persist';
+import { act, app, flushSaves, init, replaceDataset } from '../../src/store/app.svelte';
+import { addPublication, emptyDataset } from '../../src/domain/dataset';
+
+let n = 0;
+beforeEach(() => { setStore(createStore(`t${n++}`, 'kv')); });
+
+describe('persist', () => {
+  it('save then load round-trips', async () => {
+    const ds = emptyDataset('a');
+    expect(await saveDataset(ds)).toBe(true);
+    expect(await loadDataset()).toEqual(ds);
+  });
+
+  it('load returns null when nothing is stored', async () => {
+    expect(await loadDataset()).toBeNull();
+  });
+
+  it('corrupt stored value is backed up and ignored', async () => {
+    const store = createStore(`c${n++}`, 'kv');
+    setStore(store);
+    await set('dataset', { junk: true }, store);
+    expect(await loadDataset()).toBeNull();
+    expect((await listBackups())[0].reason).toBe('corrupt');
+  });
+
+  it('backups keep last 5', async () => {
+    for (let i = 0; i < 7; i++) await pushBackup(emptyDataset(`d${i}`), `r${i}`);
+    const b = await listBackups();
+    expect(b).toHaveLength(5);
+    expect(b[0].reason).toBe('r6');
+    expect(b[4].reason).toBe('r2');
+    expect(typeof b[0].savedAt).toBe('string');
+  });
+});
+
+describe('app', () => {
+  it('act saves, and rethrows domain errors without saving', async () => {
+    await init();
+    expect(app.saveState).toBe('saved');
+    act((ds) => addPublication(ds, { name: 'X', language: 'en', variant: '', defaultMode: 'weigh' }, () => 'p1'));
+    await flushSaves();
+    expect((await loadDataset())?.publications).toHaveLength(1);
+    expect(() => act(() => { throw 'boom'; })).toThrow('boom');
+  });
+
+  it('replaceDataset backs up previous', async () => {
+    await init();
+    const prev = app.ds.datasetId;
+    await replaceDataset(emptyDataset('next'), 'import');
+    expect(app.ds.datasetId).toBe('next');
+    const b = await listBackups();
+    expect(b[0].reason).toBe('import');
+    expect(b[0].dataset.datasetId).toBe(prev);
+    expect((await loadDataset())?.datasetId).toBe('next');
+  });
+
+  it('save failure sets unavailable and keeps data in memory', async () => {
+    await init();
+    vi.mocked(set).mockRejectedValue(new Error('quota'));
+    act((ds) => addPublication(ds, { name: 'Y', language: 'en', variant: '', defaultMode: 'weigh' }, () => 'p2'));
+    await flushSaves();
+    expect(app.saveState).toBe('unavailable');
+    expect(app.ds.publications.some((p) => p.id === 'p2')).toBe(true);
+    vi.mocked(set).mockReset();
+  });
+});
