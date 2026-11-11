@@ -26,7 +26,7 @@ export function summaryRows(ds: Dataset, countId: string, lang: Lang = 'en'): Su
     .filter((c) => c.finishedAt && c.id !== count.id && c.startedAt < count.startedAt)
     .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))[0];
   const rows = count.items.map((item): SummaryRow => {
-    const pub = ds.publications.find((p) => p.id === item.publicationId);
+    const pub = ds.publications.find((p) => p.id === item.publicationId) ?? item.snapshot;
     const { units, bad } = safeUnits(item, scale);
     const prevItem = prev?.items.find((i) => i.publicationId === item.publicationId);
     const previous = prevItem ? safeUnits(prevItem, scale).units : null;

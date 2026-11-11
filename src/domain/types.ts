@@ -17,7 +17,12 @@ export type Entry =
  * `sample` is the unit-weight snapshot for this count.
  * `entered` is the "entered" checkbox in the Summary for entry.
  */
-export interface CountItem { publicationId: string; sample?: Sample; entries: Entry[]; zero: boolean; entered: boolean }
+export interface PublicationSnapshot { name: string; language: string; variant: string }
+/** `snapshot` is stamped on finished counts when the publication is deleted, so history keeps its row. */
+export interface CountItem {
+  publicationId: string; sample?: Sample; entries: Entry[]; zero: boolean; entered: boolean;
+  snapshot?: PublicationSnapshot;
+}
 export interface Count { id: string; startedAt: string; finishedAt?: string; counter: string; items: CountItem[] }
 export interface Settings {
   unit: WeightUnit; scale: ScaleRange[] | null; theme: Theme; language?: Lang;

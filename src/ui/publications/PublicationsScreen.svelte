@@ -1,13 +1,14 @@
 <script lang="ts">
   import { app, act } from '../../store/app.svelte';
   import { i18n, t } from '../../i18n/index.svelte';
-  import { addPublication, archivePublication, copySample, updatePublication } from '../../domain/dataset';
+  import { addPublication, openCount, archivePublication, copySample, deletePublication, pubLanguageOf, updatePublication } from '../../domain/dataset';
   import { identityKey } from '../../domain/text';
   import { languageName, loadLanguages } from '../../domain/languages.svelte';
   import { fromGrams, parseDecimal, toGrams } from '../../domain/units';
   import type { Publication } from '../../domain/types';
   import { errorMessage, parseWhole } from '../count/errors';
   import PasteListDialog from './PasteListDialog.svelte';
+  import ConfirmDialog from '../shared/ConfirmDialog.svelte';
   import LanguageSelect from '../shared/LanguageSelect.svelte';
 
   void loadLanguages();
@@ -33,7 +34,7 @@
     units: string; weight: string; origUnits: string; origWeight: string; copyFrom: string; packSize: string; mode: 'weigh' | 'hand';
   }
   const blank = (name = ''): Form =>
-    ({ id: null, name, language: app.ds.settings.pubLanguage ?? '', variant: '', units: '', weight: '', origUnits: '', origWeight: '', copyFrom: '', packSize: '', mode: 'weigh' });
+    ({ id: null, name, language: pubLanguageOf(app.ds.settings, i18n.lang), variant: '', units: '', weight: '', origUnits: '', origWeight: '', copyFrom: '', packSize: '', mode: 'weigh' });
 
   // The draft from the count screen opens the form prefilled; it is consumed right away.
   let form = $state<Form | null>(app.pubDraftName !== null ? blank(app.pubDraftName) : null);
@@ -104,6 +105,17 @@
     try { act((ds) => archivePublication(ds, id, true)); closeForm(); } catch (err) { fail(err); }
   }
 
+  let confirmDelete = $state(false);
+  const openItem = $derived(form?.id ? openCount(app.ds)?.items.find((i) => i.publicationId === form!.id) : undefined);
+  const hasOpenEntries = $derived(!!openItem && (openItem.entries.length > 0 || openItem.zero));
+  const deleteMessage = $derived(t('pubs.delete.message') + (hasOpenEntries ? ' ' + t('pubs.delete.openWarn') : ''));
+  function remove() {
+    confirmDelete = false;
+    if (!form?.id) return;
+    const id = form.id;
+    try { act((ds) => deletePublication(ds, id)); closeForm(); } catch (err) { fail(err); }
+  }
+
   let showArchived = $state(false);
   let restoreErr = $state<{ id: string; msg: string } | null>(null);
   function restore(id: string) {
@@ -171,6 +183,7 @@
           </select>
         </label>
       {/if}
+      {#if openItem && openItem.entries.length > 0}<p class="muted" role="note">{t('pubs.sampleOpenNote')}</p>{/if}
     </fieldset>
 
     <label class="field">
@@ -187,6 +200,7 @@
     {#if formError}<p role="alert" class="err">{formError}</p>{/if}
     <div class="actions">
       {#if form.id}<button type="button" onclick={archive}>{t('pubs.archive')}</button>{/if}
+      {#if form.id}<button type="button" class="danger" onclick={() => (confirmDelete = true)}>{t('pubs.delete')}</button>{/if}
       <button type="button" onclick={closeForm}>{t('dialog.cancel')}</button>
       <button type="submit" class="primary">{t('pubs.save')}</button>
     </div>
@@ -253,12 +267,15 @@
   {/if}
 {/if}
 
+<ConfirmDialog open={confirmDelete} title={t('pubs.delete.title')} message={deleteMessage}
+  confirmLabel={t('pubs.delete.confirm')} danger onconfirm={remove} oncancel={() => (confirmDelete = false)} />
 <PasteListDialog open={app.pasteOpen} onclose={() => (app.pasteOpen = false)} />
 
 <style>
   button, input, select { min-height: 44px; font-size: 16px; }
   button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
   .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+  .danger { color: var(--bad); border-color: var(--bad); }
   .muted { color: var(--muted); }
   .err { color: var(--bad); }
   .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }

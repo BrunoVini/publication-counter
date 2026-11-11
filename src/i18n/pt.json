@@ -329,5 +329,11 @@
   "lang.use": "Usar este idioma",
   "set.pubLangs": "Idiomas das publicações",
   "set.pubLanguage": "Idioma principal",
-  "set.pubLanguages": "Outros idiomas"
+  "set.pubLanguages": "Outros idiomas",
+  "pubs.delete": "Excluir",
+  "pubs.delete.title": "Excluir esta publicação?",
+  "pubs.delete.message": "As contagens anteriores mantêm o nome e as quantidades.",
+  "pubs.delete.openWarn": "Os lançamentos desta contagem para ela serão perdidos.",
+  "pubs.delete.confirm": "Excluir",
+  "pubs.sampleOpenNote": "A contagem aberta mantém o próprio peso unitário, pois já tem lançamentos. Altere-o lá, se precisar."
 }

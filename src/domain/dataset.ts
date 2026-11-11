@@ -1,5 +1,10 @@
 import { clean, identityKey } from './text';
-import type { Count, CountItem, Dataset, Entry, Publication, Sample, Settings } from './types';
+import type { Count, CountItem, Dataset, Entry, Lang, Publication, Sample, Settings } from './types';
+
+/** Codes in the public languages list; Portuguese maps to the Brazilian variant. */
+export const DEFAULT_PUB_LANGUAGE: Record<Lang, string> = { pt: 'T', en: 'E', es: 'S' };
+/** The primary publication language, falling back to the UI language's code for old datasets. */
+export const pubLanguageOf = (s: Settings, ui: Lang): string => s.pubLanguage || DEFAULT_PUB_LANGUAGE[ui];
 
 // NOTE: plain Omit collapses the Entry union, so distribute it to keep per-kind fields.
 export type NewEntry = Entry extends infer E ? (E extends unknown ? Omit<E, 'id'> : never) : never;
@@ -125,6 +130,23 @@ export function updatePublication(
   assertValidPublication(merged);
   assertUnique(ds, merged, id);
   Object.assign(p, rest);
+  // NOTE: an open-count item without entries follows the new sample; one with entries keeps its own.
+  if ('sample' in rest) {
+    const item = openCount(ds)?.items.find((i) => i.publicationId === id);
+    if (item && item.entries.length === 0) item.sample = rest.sample && copy(rest.sample);
+  }
+}
+
+/** Always allowed: finished counts keep a snapshot of the identity, the open count loses the item. */
+export function deletePublication(ds: Dataset, id: string): void {
+  const p = findPub(ds, id);
+  for (const c of ds.counts) {
+    const idx = c.items.findIndex((i) => i.publicationId === id);
+    if (idx < 0) continue;
+    if (c.finishedAt) c.items[idx].snapshot = { name: p.name, language: p.language, variant: p.variant };
+    else c.items.splice(idx, 1);
+  }
+  ds.publications.splice(ds.publications.indexOf(p), 1);
 }
 
 export function archivePublication(ds: Dataset, id: string, archived: boolean): void {

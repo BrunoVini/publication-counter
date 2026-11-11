@@ -47,6 +47,7 @@ const schema = v.strictObject({
     items: v.array(v.strictObject({
       publicationId: id, sample: v.optional(sample), entries: v.array(entry),
       zero: v.boolean(), entered: v.boolean(),
+      snapshot: v.optional(v.strictObject({ name: text, language: text, variant: text })),
     })),
   })),
 });
@@ -62,7 +63,7 @@ function structureOk(ds: Dataset): boolean {
     && uniq(ds.counts.map((c) => c.id))
     && ds.counts.filter((c) => !c.finishedAt).length <= 1
     && ds.counts.every((c) => uniq(c.items.map((i) => i.publicationId))
-      && c.items.every((i) => ids.has(i.publicationId)
+      && c.items.every((i) => (ids.has(i.publicationId) || !!i.snapshot)
         && uniq(i.entries.map((e) => e.id))
         && !(i.zero && i.entries.length > 0)
         && i.entries.filter((e) => e.kind === 'sample').length <= 1));
