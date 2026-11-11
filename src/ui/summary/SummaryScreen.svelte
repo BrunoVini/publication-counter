@@ -11,6 +11,7 @@
   import { showToast } from '../shared/Toast.svelte';
   import { shareOrDownload } from '../shared/fileio';
   import { exportExcel } from './excel';
+  import Icon from '../shared/Icon.svelte';
 
   let { countId }: { countId: string } = $props();
 
@@ -71,9 +72,9 @@
 </script>
 
 {#if count}
-  <section>
-    <div class="no-print bar">
-      <button type="button" onclick={() => (app.summaryCountId = null)}>{t('item.close')}</button>
+  <section class="stack">
+    <div class="no-print">
+      <button type="button" onclick={() => (app.summaryCountId = null)}><Icon name="back" /> {t('item.close')}</button>
     </div>
     <h2>{t('summary.title')}</h2>
     <p class="print-only">
@@ -86,16 +87,17 @@
 
     {#if notCounted > 0}
       <button type="button" class="warn no-print" onclick={showNotCounted} title={t('summary.notCountedHint')}>
-        <span aria-hidden="true">⚠️</span> {t('summary.notCounted', { count: notCounted })}
+        <Icon name="warn" /> {t('summary.notCounted', { count: notCounted })} <Icon name="chevron" />
       </button>
     {/if}
     {#if error}<p role="alert" class="err">{error}</p>{/if}
 
+    <div class="scroll">
     <table>
       <thead>
         <tr>
           <th scope="col">{t('summary.col.name')}</th>
-          <th scope="col">{t('summary.col.variant')}</th>
+          <th scope="col" class="var">{t('summary.col.variant')}</th>
           <th scope="col" class="num">{t('summary.col.quantity')}</th>
           <th scope="col" class="num no-print">{t('summary.col.previous')}</th>
           <th scope="col" class="no-print">{t('summary.col.entered')}</th>
@@ -106,17 +108,18 @@
           <tr><th scope="colgroup" colspan="5" class="group">{g.language}</th></tr>
           {#each g.rows as r (r.publicationId)}
             <tr class:big={r.bigChange}>
-              <th scope="row">{r.name}</th>
-              <td>{r.variant}</td>
+              <!-- NOTE: on phones the variant column is hidden and the variant shows under the name instead; only one of the two is ever rendered. -->
+              <th scope="row">{r.name}{#if r.variant}<span class="var-in"> {r.variant}</span>{/if}</th>
+              <td class="var">{r.variant}</td>
               <td class="num">
                 {#if r.units === null}
                   <span aria-hidden="true">—</span>
                   <span class="visually-hidden">{t('summary.notCountedCell')}</span>
                 {:else}{fmtNumber(Math.round(r.units), 0)}{/if}
                 {#if r.attention}<span class="bad">{t('summary.attention')}</span>{/if}
-                {#if r.bigChange}<span class="bad no-print"><span aria-hidden="true">⚠️</span> {t('summary.bigChange')}</span>{/if}
+                {#if r.bigChange}<span class="bad no-print"><Icon name="warn" size={16} /> {t('summary.bigChange')}</span>{/if}
               </td>
-              <td class="num no-print">{r.previous === null ? '—' : fmtNumber(Math.round(r.previous), 0)}</td>
+              <td class="num prev no-print">{r.previous === null ? '—' : fmtNumber(Math.round(r.previous), 0)}</td>
               <td class="no-print">
                 <input type="checkbox" checked={r.entered} aria-label={t('summary.enteredFor', { name: r.name })}
                   onchange={(e) => act((ds) => setEntered(ds, countId, r.publicationId, e.currentTarget.checked))} />
@@ -126,15 +129,16 @@
         </tbody>
       {/each}
     </table>
+    </div>
 
-    <div class="actions no-print">
-      <button type="button" onclick={() => window.print()}>{t('summary.print')}</button>
-      <button type="button" onclick={excel}>{t('summary.excel')}</button>
+    <div class="acts no-print">
       {#if finished}
-        <button type="button" onclick={reopen}>{t('summary.reopen')}</button>
+        <button type="button" class="main" onclick={reopen}><Icon name="undo" /> {t('summary.reopen')}</button>
       {:else}
-        <button type="button" class="primary" onclick={() => (notCounted > 0 ? (confirmFinish = true) : finish())}>{t('summary.finish')}</button>
+        <button type="button" class="primary big main" onclick={() => (notCounted > 0 ? (confirmFinish = true) : finish())}><Icon name="check" size={24} /> {t('summary.finish')}</button>
       {/if}
+      <button type="button" onclick={() => window.print()}><Icon name="print" /> {t('summary.print')}</button>
+      <button type="button" onclick={excel}><Icon name="table" /> {t('summary.excel')}</button>
     </div>
   </section>
 
@@ -146,19 +150,28 @@
 {/if}
 
 <style>
-  button { min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .warn { background: var(--warn-bg); color: var(--warn-text); font-weight: 700; margin-bottom: 8px; }
-  .muted { color: var(--muted); }
-  .err, .bad { color: var(--bad); }
-  .bad { display: block; font-weight: 600; font-size: 14px; }
+  .warn { display: flex; justify-content: flex-start; width: 100%; padding-block: var(--sp-2); font-weight: 700; text-align: left; }
+  .bad { display: block; font-size: var(--fs-sm); }
+  .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
-  th[scope='row'] { font-weight: 600; }
-  .num { text-align: right; }
+  th, td { padding: var(--sp-2); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  thead th { color: var(--muted); font-size: var(--fs-sm); vertical-align: bottom; }
+  th[scope='row'] { font-weight: 600; overflow-wrap: break-word; }
+  .var-in { display: none; color: var(--muted); font-size: var(--fs-sm); font-weight: 400; }
+  @media screen and (max-width: 600px) {
+    .var { display: none; }
+    .var-in { display: block; }
+    th, td { padding: var(--sp-2) var(--sp-1); }
+  }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.num:not(.prev) { font-size: 18px; font-weight: 700; }
+  .prev { color: var(--muted); }
   .group { background: var(--surface); }
+  /* NOTE: the row tint only reinforces the "changed a lot" text shown in the quantity cell. */
   tr.big { background: var(--warn-bg); }
-  td input { width: 24px; height: 24px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  tr.big .prev { color: inherit; }
+  .acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+  .acts button { flex: 1; }
+  .acts .main { flex: 1 0 100%; }
+  @media print { td.num:not(.prev) { font-size: inherit; } }
 </style>

@@ -10,6 +10,7 @@
   import PasteListDialog from './PasteListDialog.svelte';
   import ConfirmDialog from '../shared/ConfirmDialog.svelte';
   import LanguageSelect from '../shared/LanguageSelect.svelte';
+  import Icon from '../shared/Icon.svelte';
 
   void loadLanguages();
   const langName = (code: string) => languageName(code, i18n.lang);
@@ -138,14 +139,14 @@
 <div class="bar">
   <label class="field grow">
     <span>{t('pubs.search')}</span>
-    <input type="search" bind:value={query} autocomplete="off" />
+    <span class="search"><Icon name="search" /><input type="search" bind:value={query} autocomplete="off" /></span>
   </label>
   <button type="button" class="primary" onclick={() => openForm()}>{t('pubs.new')}</button>
-  <button type="button" onclick={() => (app.pasteOpen = true)}>{t('pubs.paste')}</button>
+  <button type="button" onclick={() => (app.pasteOpen = true)}><Icon name="clipboard" /> {t('pubs.paste')}</button>
 </div>
 
 {#if form}
-  <form class="panel" onsubmit={save} aria-label={t(form.id ? 'pubs.edit' : 'pubs.new')}>
+  <form class="card panel stack" onsubmit={save} aria-label={t(form.id ? 'pubs.edit' : 'pubs.new')}>
     <p class="muted">{t('form.required')}</p>
     <label class="field">
       <span>{t('pubs.name')} <span aria-hidden="true">*</span></span>
@@ -162,7 +163,7 @@
     </label>
     <datalist id="pub-variants">{#each variants as v (v)}<option value={v}></option>{/each}</datalist>
 
-    <fieldset>
+    <fieldset class="stack">
       <legend>{t('pubs.unitWeight')}</legend>
       <label class="field">
         <span>{t('pubs.sampleUnits')}</span>
@@ -200,7 +201,7 @@
     {#if formError}<p role="alert" class="err">{formError}</p>{/if}
     <div class="actions">
       {#if form.id}<button type="button" onclick={archive}>{t('pubs.archive')}</button>{/if}
-      {#if form.id}<button type="button" class="danger" onclick={() => (confirmDelete = true)}>{t('pubs.delete')}</button>{/if}
+      {#if form.id}<button type="button" class="danger" onclick={() => (confirmDelete = true)}><Icon name="trash" /> {t('pubs.delete')}</button>{/if}
       <button type="button" onclick={closeForm}>{t('dialog.cancel')}</button>
       <button type="submit" class="primary">{t('pubs.save')}</button>
     </div>
@@ -229,7 +230,7 @@
           {:else}
             <td>{p.name}</td><td>{langName(p.language)}</td><td>{p.variant}</td>
             <td class="acts">
-              <button type="button" onclick={() => (inline = { id: p.id, name: p.name, language: p.language, variant: p.variant, error: '' })}>{t('pubs.editRow')}</button>
+              <button type="button" onclick={() => (inline = { id: p.id, name: p.name, language: p.language, variant: p.variant, error: '' })}><Icon name="pencil" /> {t('pubs.editRow')}</button>
               <button type="button" onclick={() => openForm(p)}>{t('pubs.details')}</button>
             </td>
           {/if}
@@ -242,8 +243,11 @@
     {#each shown as p (p.id)}
       <li>
         <button type="button" class="row" onclick={() => openForm(p)}>
-          <strong>{p.name}</strong>
-          <span class="muted">{[langName(p.language), p.variant].filter(Boolean).join(' · ')}</span>
+          <span class="main">
+            <strong>{p.name}</strong>
+            <span class="sub">{[langName(p.language), p.variant].filter(Boolean).join(' · ')}</span>
+          </span>
+          <Icon name="chevron" />
         </button>
       </li>
     {/each}
@@ -252,14 +256,14 @@
 
 {#if archived.length}
   <button type="button" class="toggle" aria-expanded={showArchived} onclick={() => (showArchived = !showArchived)}>
-    <span aria-hidden="true">{showArchived ? '▾' : '▸'}</span> {t('pubs.archived', { count: archived.length })}
+    <Icon name={showArchived ? 'down' : 'chevron'} /> {t('pubs.archived', { count: archived.length })}
   </button>
   {#if showArchived}
     <ul class="list">
       {#each archived as p (p.id)}
         <li class="arch">
-          <span><strong>{p.name}</strong> <span class="muted">{[langName(p.language), p.variant].filter(Boolean).join(' · ')}</span></span>
-          <button type="button" onclick={() => restore(p.id)}>{t('pubs.restore')}</button>
+          <span class="main"><strong>{p.name}</strong> <span class="muted">{[langName(p.language), p.variant].filter(Boolean).join(' · ')}</span></span>
+          <button type="button" onclick={() => restore(p.id)}><Icon name="undo" /> {t('pubs.restore')}</button>
           {#if restoreErr?.id === p.id}<p role="alert" class="err">{restoreErr.msg}</p>{/if}
         </li>
       {/each}
@@ -272,25 +276,18 @@
 <PasteListDialog open={app.pasteOpen} onclose={() => (app.pasteOpen = false)} />
 
 <style>
-  button, input, select { min-height: 44px; font-size: 16px; }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .danger { color: var(--bad); border-color: var(--bad); }
-  .muted { color: var(--muted); }
-  .err { color: var(--bad); }
-  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
-  .grow { flex: 1; min-width: 160px; }
-  .field { display: grid; gap: 4px; margin: 8px 0; }
-  input, select { padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
-  .panel { border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin: 12px 0; max-width: 520px; }
-  fieldset { border: 1px solid var(--border); border-radius: 10px; margin: 8px 0; }
-  .actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  .list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
-  .row { width: 100%; min-height: 56px; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; }
-  .arch { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
-  .toggle { margin-top: 16px; }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
-  td input { width: 100%; box-sizing: border-box; }
+  .bar { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: end; margin-bottom: var(--sp-3); }
+  .grow { flex: 1 1 100%; }
+  .bar button { flex: 1; }
+  .panel { margin: var(--sp-3) 0; max-width: 520px; background: var(--surface); }
+  .panel .actions button { flex: 1 1 auto; }
+  .arch { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-1); }
+  .arch .main { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .toggle { margin-top: var(--sp-4); border-color: transparent; color: var(--muted); padding: 0 var(--sp-1); }
+  table { width: 100%; border-collapse: collapse; margin: var(--sp-3) 0; }
+  th, td { text-align: left; padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: var(--fs-sm); }
   .acts { white-space: nowrap; text-align: right; }
+  .acts button { margin-left: var(--sp-1); }
+  @media (min-width: 600px) { .grow { flex: 1 1 240px; } .bar button { flex: none; } }
 </style>

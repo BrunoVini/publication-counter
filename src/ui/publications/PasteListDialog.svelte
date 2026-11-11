@@ -8,6 +8,7 @@
   import LanguageSelect from '../shared/LanguageSelect.svelte';
   import { showToast } from '../shared/Toast.svelte';
   import { errorMessage } from '../count/errors';
+  import Icon from '../shared/Icon.svelte';
 
   let { open, onclose }: { open: boolean; onclose: () => void } = $props();
 
@@ -38,7 +39,7 @@
   });
   const fresh = $derived(rows.filter((r) => r.status === 'new'));
   const label = { new: 'pubs.paste.new', paste: 'pubs.paste.dupPaste', catalogue: 'pubs.paste.dupCatalogue' } as const;
-  const icon = { new: '+', paste: '=', catalogue: '=' } as const;
+  const icon = { new: 'plus', paste: 'minus', catalogue: 'minus' } as const;
 
   function confirm() {
     // NOTE: snapshot first; `fresh` recomputes to empty once the rows are in the catalogue.
@@ -71,17 +72,17 @@
       <LanguageSelect label={t('pubs.paste.language')} bind:value={language} />
     </div>
     {#if rows.length}
-      <table>
+      <div class="scroll"><table>
         <thead><tr><th>{t('pubs.name')}</th><th>{t('pubs.language')}</th><th>{t('pubs.variant')}</th><th>{t('pubs.paste.status')}</th></tr></thead>
         <tbody>
           {#each rows as r, i (i)}
             <tr class={r.status}>
               <td>{r.name}</td><td>{languageName(r.language, i18n.lang)}</td><td>{r.variant}</td>
-              <td><span aria-hidden="true">{icon[r.status]}</span> <span>{t(label[r.status])}</span></td>
+              <td><Icon name={icon[r.status]} size={16} /> <span>{t(label[r.status])}</span></td>
             </tr>
           {/each}
         </tbody>
-      </table>
+      </table></div>
     {/if}
     {#if error}<p role="alert" class="err">{error}</p>{/if}
     <div class="actions">
@@ -92,19 +93,11 @@
 </dialog>
 
 <style>
-  dialog { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; width: min(640px, 94vw); padding: 0; }
-  .content { padding: 16px; }
-  button { min-height: 44px; font-size: 16px; }
-  textarea { font-size: 16px; }
-  button { padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
-  button:disabled { opacity: 0.5; }
-  .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .muted { color: var(--muted); }
-  .err { color: var(--bad); }
-  .field { display: grid; gap: 4px; margin: 8px 0; }
-  textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
-  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  dialog { width: min(640px, calc(100vw - 2 * var(--sp-4))); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: var(--sp-2); border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: var(--fs-sm); }
+  tr.new td:last-child { color: var(--accent); font-weight: 600; }
   tr.paste td, tr.catalogue td { color: var(--muted); }
-  .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 </style>

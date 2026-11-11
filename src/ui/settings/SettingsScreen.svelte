@@ -16,6 +16,7 @@
   import ScaleEditor from './ScaleEditor.svelte';
   import HowItWorks from './HowItWorks.svelte';
   import CloudSection from './CloudSection.svelte';
+  import Icon from '../shared/Icon.svelte';
 
   const themes: Theme[] = ['system', 'light', 'dark'];
   const langs: { code: Lang; name: string }[] = [
@@ -110,30 +111,36 @@
   {#if view === 'how'}
     <HowItWorks onback={() => (view = 'main')} />
   {:else}
-    <section class="stack">
-      <h2>{t('set.appearance')}</h2>
-      <fieldset>
+    <section class="card stack">
+      <h2 class="sec">{t('set.appearance')}</h2>
+      <fieldset class="segset">
         <legend>{t('set.theme')}</legend>
-        {#each themes as th (th)}
-          <label><input type="radio" name="theme" checked={settings.theme === th} onchange={() => chooseTheme(th)} /> {t(`set.theme.${th}`)}</label>
-        {/each}
+        <div class="seg">
+          {#each themes as th (th)}
+            <label><input type="radio" name="theme" checked={settings.theme === th} onchange={() => chooseTheme(th)} /><span>{t(`set.theme.${th}`)}</span></label>
+          {/each}
+        </div>
       </fieldset>
-      <fieldset>
+      <fieldset class="segset">
         <legend>{t('set.language')}</legend>
-        {#each langs as l (l.code)}
-          <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /> {l.name}</label>
-        {/each}
+        <div class="seg">
+          {#each langs as l (l.code)}
+            <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /><span>{l.name}</span></label>
+          {/each}
+        </div>
       </fieldset>
     </section>
 
-    <section class="stack">
-      <h2>{t('set.weighing')}</h2>
+    <section class="card stack">
+      <h2 class="sec">{t('set.weighing')}</h2>
       <p class="muted">{t('form.required')}</p>
-      <fieldset>
+      <fieldset class="segset">
         <legend>{t('set.unit')} <span aria-hidden="true">*</span></legend>
-        {#each units as u (u)}
-          <label><input type="radio" name="unit" checked={settings.unit === u} onchange={() => chooseUnit(u)} /> {u}</label>
-        {/each}
+        <div class="seg">
+          {#each units as u (u)}
+            <label><input type="radio" name="unit" checked={settings.unit === u} onchange={() => chooseUnit(u)} /><span>{u}</span></label>
+          {/each}
+        </div>
       </fieldset>
       <h3>{t('set.scale')}</h3>
       {#if editingScale}
@@ -148,8 +155,8 @@
         {:else}
           <p class="muted">{t('set.scaleNone')}</p>
         {/if}
-        <div class="row">
-          <button type="button" onclick={() => (editingScale = true)}>{t('set.scaleEdit')}</button>
+        <div class="btn-row">
+          <button type="button" onclick={() => (editingScale = true)}><Icon name="pencil" /> {t('set.scaleEdit')}</button>
           {#if settings.scale}<button type="button" onclick={() => (confirm = 'clearScale')}>{t('set.scaleClear')}</button>{/if}
         </div>
       {/if}
@@ -158,23 +165,23 @@
       </label>
     </section>
 
-    <section class="stack">
-      <h2>{t('set.pubLangs')}</h2>
+    <section class="card stack">
+      <h2 class="sec">{t('set.pubLangs')}</h2>
       <p class="muted">{t('form.required')}</p>
       <LanguagePicker mode="single" required legend={t('set.pubLanguage')} value={pubLanguageOf(settings, i18n.lang)} onchange={choosePrimary} />
       <LanguagePicker mode="multi" legend={t('set.pubLanguages')} value={(settings.pubLanguages ?? []).filter((c) => c !== pubLanguageOf(settings, i18n.lang))} onchange={chooseOthers} />
     </section>
 
-    <section class="stack">
-      <h2>{t('set.cloud')}</h2>
+    <section class="card stack">
+      <h2 class="sec">{t('set.cloud')}</h2>
       <CloudSection />
     </section>
 
-    <section class="stack">
-      <h2>{t('set.data')}</h2>
-      <div class="row">
-        <button type="button" onclick={handover}>{t('set.handover')}</button>
-        <button type="button" onclick={openFile}>{t('set.open')}</button>
+    <section class="card stack">
+      <h2 class="sec">{t('set.data')}</h2>
+      <div class="btn-row">
+        <button type="button" onclick={handover}><Icon name="share" /> {t('set.handover')}</button>
+        <button type="button" onclick={openFile}><Icon name="folder" /> {t('set.open')}</button>
       </div>
       {#if corrupt !== undefined}
         <button type="button" onclick={exportCorrupt}>{t('set.exportCorrupt')}</button>
@@ -188,17 +195,17 @@
           {#each backups as b (b.savedAt)}
             <li>
               <span>{t('set.backupInfo', { when: when(b.savedAt), reason: reason(b.reason), count: b.dataset.publications.length })}</span>
-              <button type="button" onclick={() => (restoring = b)}>{t('set.restoreBtn')}</button>
+              <button type="button" onclick={() => (restoring = b)}><Icon name="undo" /> {t('set.restoreBtn')}</button>
             </li>
           {/each}
         </ul>
       {/if}
       <h3>{t('set.wipe')}</h3>
-      <button type="button" onclick={() => (confirm = 'wipe')}>{t('set.wipe')}</button>
+      <button type="button" class="danger" onclick={() => (confirm = 'wipe')}><Icon name="trash" /> {t('set.wipe')}</button>
     </section>
 
-    <div class="row">
-      <button type="button" onclick={() => (view = 'how')}>{t('set.howLink')}</button>
+    <div class="btn-row">
+      <button type="button" onclick={() => (view = 'how')}><Icon name="info" /> {t('set.howLink')}</button>
       <a class="btn" href="/privacy.html" target="_blank" rel="noopener">{t('set.privacyLink')}</a>
     </div>
   {/if}
@@ -216,21 +223,9 @@
   confirmLabel={t('set.restoreConfirm')} danger onconfirm={restore} oncancel={() => (restoring = null)} />
 
 <style>
-  .col { max-width: 560px; margin: 0 auto; display: grid; gap: 24px; }
-  .stack { display: grid; gap: 8px; }
-  h2, h3, p, ul { margin: 0; }
-  fieldset { border: 1px solid var(--border); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
-  label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
-  .field { display: grid; gap: 2px; }
-  input[type='text'] { min-height: 44px; font-size: 1rem; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-  input[type='radio'] { width: 24px; height: 24px; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; }
-  button { min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; }
-  .btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; text-decoration: none; }
-  button:disabled { color: var(--muted); }
-  button:first-child:not(.row button) { justify-self: start; }
-  .backups { list-style: none; padding: 0; display: grid; gap: 8px; }
-  .backups li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .muted { color: var(--muted); }
-  .bad { color: var(--bad); }
+  .col { max-width: 560px; margin: 0 auto; display: grid; gap: var(--sp-4); }
+  .card > button { justify-self: start; }
+  .btn-row > * { flex: 1 1 auto; }
+  .backups { list-style: none; padding: 0; display: grid; gap: var(--sp-2); }
+  .backups li { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); }
 </style>

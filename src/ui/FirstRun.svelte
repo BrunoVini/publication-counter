@@ -7,6 +7,7 @@
   import { DEFAULT_PUB_LANGUAGE } from '../domain/dataset';
   import { languagesLoaded, loadLanguages } from '../domain/languages.svelte';
   import LanguagePicker from './shared/LanguagePicker.svelte';
+  import Icon from './shared/Icon.svelte';
 
   const langs: { code: Lang; name: string }[] = [
     { code: 'pt', name: 'Português' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
@@ -80,52 +81,49 @@
 </script>
 
 <main class="first">
-  <h1>{t('first.title')}</h1>
+  <h1><Icon name="scale" size={28} /> {t('first.title')}</h1>
 
   {#if step === 1}
-    <fieldset>
+    <fieldset class="segset">
       <legend>{t('first.language')}</legend>
-      {#each langs as l (l.code)}
-        <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /> {l.name}</label>
-      {/each}
+      <div class="seg">
+        {#each langs as l (l.code)}
+          <label><input type="radio" name="lang" checked={i18n.lang === l.code} onchange={() => chooseLang(l.code)} /><span>{l.name}</span></label>
+        {/each}
+      </div>
     </fieldset>
     <p class="muted">{t('form.required')}</p>
     <LanguagePicker mode="single" required legend={t('first.pubLanguage')} value={primary}
       onchange={(c) => { primary = c; primaryTouched = true; }} />
     <LanguagePicker mode="multi" legend={t('first.pubLanguages')} value={others} onchange={(v) => (others = v)} />
-    <fieldset>
+    <fieldset class="segset">
       <legend>{t('first.unit')} <span aria-hidden="true">*</span></legend>
-      {#each units as u (u)}
-        <label><input type="radio" name="unit" checked={unit === u} onchange={() => chooseUnit(u)} /> {u}</label>
-      {/each}
+      <div class="seg">
+        {#each units as u (u)}
+          <label><input type="radio" name="unit" checked={unit === u} onchange={() => chooseUnit(u)} /><span>{u}</span></label>
+        {/each}
+      </div>
     </fieldset>
     {#if !primary && languagesLoaded()}<p class="err" role="alert">{t('first.pubLanguage.required')}</p>{/if}
-    <button type="button" class="primary" disabled={!primary} onclick={next}>{t('first.next')}</button>
+    <button type="button" class="primary big" disabled={!primary} onclick={next}>{t('first.next')} <Icon name="chevron" /></button>
   {:else if step === 2}
     <h2 tabindex="-1" bind:this={heading}>{t('first.ios.title')}</h2>
     <p>{t('first.ios.steps')}</p>
     <p>{t('first.ios.why')}</p>
-    <button type="button" class="primary" onclick={() => (step = 3)}>{t('first.ios.continue')}</button>
+    <button type="button" class="primary big" onclick={() => (step = 3)}>{t('first.ios.continue')} <Icon name="chevron" /></button>
   {:else}
     <h2 tabindex="-1" bind:this={heading}>{t('first.start.title')}</h2>
     <div class="col">
-      <button type="button" class="primary" onclick={paste}>{t('first.paste')}</button>
-      <button type="button" onclick={openFile}>{t('first.open')}</button>
-      <button type="button" onclick={empty}>{t('first.empty')}</button>
+      <button type="button" class="primary big" onclick={paste}><Icon name="clipboard" size={24} /> {t('first.paste')}</button>
+      <button type="button" class="big" onclick={openFile}><Icon name="folder" size={24} /> {t('first.open')}</button>
+      <button type="button" class="big" onclick={empty}><Icon name="pencil" size={24} /> {t('first.empty')}</button>
     </div>
     <p class="err" role="alert">{error}</p>
   {/if}
 </main>
 
 <style>
-  .first { max-width: 480px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; }
-  fieldset { border: 1px solid var(--border); border-radius: 10px; display: grid; gap: 4px; }
-  label { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 16px; }
-  input[type='radio'] { width: 24px; height: 24px; }
-  .col { display: grid; gap: 12px; }
-  button { min-height: 44px; font-size: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-  button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
-  .muted { color: var(--muted); margin: 0; }
-  button:disabled { opacity: 0.5; }
-  .err { color: var(--bad); font-weight: 600; margin: 0; }
+  .first { max-width: 480px; margin: 0 auto; padding: var(--sp-6) var(--sp-4); display: grid; gap: var(--sp-4); }
+  h1 { display: flex; align-items: center; gap: var(--sp-2); color: var(--accent); }
+  .col { display: grid; gap: var(--sp-3); }
 </style>
