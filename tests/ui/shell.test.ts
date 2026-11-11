@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
 import App from '../../src/ui/App.svelte';
@@ -13,6 +13,7 @@ beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
 });
+beforeEach(() => { app.ds.settings.firstRunDone = true; });
 afterEach(() => { cleanup(); app.saveState = 'saved'; app.tab = 'count'; i18n.lang = 'en'; });
 
 describe('shell', () => {

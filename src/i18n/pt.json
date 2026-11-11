@@ -11,5 +11,22 @@
   "save.unavailable": "Não salvo",
   "save.unavailableBanner": "Os dados não estão sendo salvos neste aparelho. Exporte um arquivo para não perder a contagem.",
   "toast.dismiss": "Dispensar aviso",
-  "dialog.cancel": "Cancelar"
+  "dialog.cancel": "Cancelar",
+  "first.title": "Bem-vindo ao PubCount",
+  "first.language": "Idioma",
+  "first.unit": "Unidade de peso",
+  "first.next": "Continuar",
+  "first.back": "Voltar",
+  "first.ios.title": "Instale na tela de início",
+  "first.ios.steps": "Toque no botão Compartilhar e escolha Adicionar à Tela de Início.",
+  "first.ios.why": "O Safari apaga os dados de sites não instalados após cerca de 7 dias sem uso. Instalar mantém suas contagens seguras.",
+  "first.ios.continue": "Continuar",
+  "first.start.title": "Como você quer começar?",
+  "first.paste": "Colar lista",
+  "first.open": "Abrir arquivo recebido",
+  "first.empty": "Começar vazio",
+  "first.err.notJson": "Este arquivo não é um arquivo do PubCount.",
+  "first.err.invalid": "Este arquivo está danificado ou não é um arquivo válido do PubCount.",
+  "first.err.tooNew": "Este arquivo foi criado por uma versão mais nova do PubCount. Atualize o app e tente de novo.",
+  "first.err.backupFailed": "Não foi possível fazer backup dos dados atuais, então nada foi alterado."
 }

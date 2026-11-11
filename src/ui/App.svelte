@@ -3,11 +3,15 @@
   import { app } from '../store/app.svelte';
   import { t } from '../i18n/index.svelte';
   import Toast from './shared/Toast.svelte';
+  import FirstRun from './FirstRun.svelte';
 
   const tabs = ['count', 'publications', 'settings'] as const;
   const icons = { count: '☰', publications: '▤', settings: '⚙' } as const;
 </script>
 
+{#if !app.ds.settings.firstRunDone}
+  <FirstRun />
+{:else}
 <div class="shell">
   <header class="no-print">
     <strong>{t('app.name')}</strong>
@@ -35,6 +39,7 @@
     <h1>{t(`nav.${app.tab}`)}</h1>
   </main>
 </div>
+{/if}
 <Toast />
 
 <style>

@@ -11,5 +11,22 @@
   "save.unavailable": "Not saved",
   "save.unavailableBanner": "Your data is not being saved on this device. Export a file so you do not lose the count.",
   "toast.dismiss": "Dismiss message",
-  "dialog.cancel": "Cancel"
+  "dialog.cancel": "Cancel",
+  "first.title": "Welcome to PubCount",
+  "first.language": "Language",
+  "first.unit": "Weight unit",
+  "first.next": "Continue",
+  "first.back": "Back",
+  "first.ios.title": "Install on your home screen",
+  "first.ios.steps": "Tap the Share button, then choose Add to Home Screen.",
+  "first.ios.why": "Safari deletes the data of sites that are not installed after about 7 days without use. Installing keeps your counts safe.",
+  "first.ios.continue": "Continue",
+  "first.start.title": "How do you want to start?",
+  "first.paste": "Paste list",
+  "first.open": "Open received file",
+  "first.empty": "Start empty",
+  "first.err.notJson": "This file is not a PubCount file.",
+  "first.err.invalid": "This file is damaged or not a valid PubCount file.",
+  "first.err.tooNew": "This file was made by a newer version of PubCount. Update the app and try again.",
+  "first.err.backupFailed": "Could not back up your current data, so nothing was changed."
 }

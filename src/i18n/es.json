@@ -11,5 +11,22 @@
   "save.unavailable": "No guardado",
   "save.unavailableBanner": "Los datos no se están guardando en este dispositivo. Exporta un archivo para no perder el conteo.",
   "toast.dismiss": "Cerrar aviso",
-  "dialog.cancel": "Cancelar"
+  "dialog.cancel": "Cancelar",
+  "first.title": "Bienvenido a PubCount",
+  "first.language": "Idioma",
+  "first.unit": "Unidad de peso",
+  "first.next": "Continuar",
+  "first.back": "Volver",
+  "first.ios.title": "Instala en la pantalla de inicio",
+  "first.ios.steps": "Toca el botón Compartir y elige Añadir a pantalla de inicio.",
+  "first.ios.why": "Safari borra los datos de los sitios no instalados tras unos 7 días sin usarlos. Instalar mantiene seguros tus conteos.",
+  "first.ios.continue": "Continuar",
+  "first.start.title": "¿Cómo quieres empezar?",
+  "first.paste": "Pegar lista",
+  "first.open": "Abrir archivo recibido",
+  "first.empty": "Empezar vacío",
+  "first.err.notJson": "Este archivo no es un archivo de PubCount.",
+  "first.err.invalid": "Este archivo está dañado o no es un archivo válido de PubCount.",
+  "first.err.tooNew": "Este archivo fue creado por una versión más nueva de PubCount. Actualiza la app e inténtalo de nuevo.",
+  "first.err.backupFailed": "No se pudo respaldar tus datos actuales, así que no se cambió nada."
 }

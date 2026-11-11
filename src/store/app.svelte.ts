@@ -7,6 +7,8 @@ export const app = $state({
   saveState: 'saved' as 'saved' | 'saving' | 'unavailable',
   tab: 'count' as 'count' | 'publications' | 'settings',
   openItemId: null as string | null,
+  // NOTE: set by first run's "Paste list"; the publications tab consumes it to open the paste dialog.
+  pasteOpen: false,
 });
 
 let chain: Promise<unknown> = Promise.resolve();
