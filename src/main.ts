@@ -4,6 +4,7 @@ import { app, init } from './store/app.svelte'
 import { detectLang, i18n } from './i18n/index.svelte'
 import { applyTheme } from './ui/theme'
 import { handleSharedFile, setupLaunchQueue, setupWakeLock } from './launch'
+import { initDrive, syncNow } from './store/sync.svelte'
 import { showToast } from './ui/shared/Toast.svelte'
 import { t } from './i18n/index.svelte'
 
@@ -17,6 +18,8 @@ async function start(): Promise<void> {
   setupLaunchQueue()
   setupWakeLock()
   void handleSharedFile()
+  void initDrive()
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void syncNow() })
   // NOTE: dynamic import keeps the virtual module out of tests; the update toast stays until dismissed.
   void import('virtual:pwa-register').then(({ registerSW }) => {
     const updateSW = registerSW({

@@ -264,5 +264,12 @@
   "how.sampleText": "Use at least 10 units, and a sample weight of at least 200 times the scale resolution. If the sample falls short, the app suggests how many units to use but does not block you. Very light leaflets only need more units.",
   "pwa.update": "New version available",
   "pwa.reload": "Reload",
-  "ios.banner": "Add to Home Screen to keep your data."
+  "ios.banner": "Add to Home Screen to keep your data.",
+  "drive.err.invalid": "The Drive file is not a valid PubCount file. Your data was not changed.",
+  "drive.err.tooNew": "The Drive file was made by a newer version of PubCount. Update the app. Your data was not changed.",
+  "drive.err.notJson": "The Drive file is not readable. Your data was not changed.",
+  "drive.err.network": "Could not reach Google Drive. Your data is safe and the sync will retry.",
+  "drive.err.cancelled": "Google sign-in was closed or blocked. Nothing was connected.",
+  "drive.err.backupFailed": "Could not back up your current data, so nothing was changed.",
+  "drive.err.generic": "Drive sync failed. Your data is safe and the sync will retry."
 }

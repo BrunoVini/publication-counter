@@ -87,8 +87,10 @@ export function parseDataset(textIn: string):
   return { ok: true, dataset: v.parse(schema, migrated) as Dataset };
 }
 
-export function exportFileName(ds: Dataset, today: string): string {
+export function exportBaseName(ds: Dataset): string {
   const slug = (ds.settings.locationName ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  return `${slug || 'pubcount'}-${today}.pubcount`;
+  return slug || 'pubcount';
 }
+
+export const exportFileName = (ds: Dataset, today: string): string => `${exportBaseName(ds)}-${today}.pubcount`;

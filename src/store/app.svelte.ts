@@ -3,6 +3,7 @@ import { applyTheme } from '../ui/theme';
 import { validateDataset } from '../domain/file';
 import { emptyDataset } from '../domain/dataset';
 import type { Dataset } from '../domain/types';
+import { scheduleSync } from './sync.svelte';
 import { loadDataset, pushBackup, requestPersistentStorage, saveDataset } from './persist';
 
 export const app = $state({
@@ -20,6 +21,8 @@ export const app = $state({
   onlyNotCounted: false,
   // NOTE: text of a file received by launch or share, waiting for the user to confirm replacing data.
   incomingFile: null as string | null,
+  // NOTE: ISO time of the last successful save in this session; null until something is saved.
+  lastSavedAt: null as string | null,
 });
 
 let chain: Promise<unknown> = Promise.resolve();
@@ -42,7 +45,11 @@ function save(): void {
   void enqueue(() => saveDataset(snap)).then((ok) => {
     pending--;
     if (!ok) app.saveState = 'unavailable';
-    else if (pending === 0) app.saveState = 'saved';
+    else {
+      app.lastSavedAt = new Date().toISOString();
+      if (pending === 0) app.saveState = 'saved';
+      scheduleSync();
+    }
   });
 }
 
@@ -52,6 +59,7 @@ export const flushSaves = async (): Promise<void> => { await chain; };
 export async function init(): Promise<void> {
   let ds: Dataset | null = null;
   readFailed = false;
+  app.lastSavedAt = null;
   try { ds = await loadDataset(); } catch { readFailed = true; app.saveState = 'unavailable'; }
   app.ds = ds ?? emptyDataset(crypto.randomUUID());
   if (!ds && !readFailed) save();

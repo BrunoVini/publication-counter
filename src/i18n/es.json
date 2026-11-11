@@ -264,5 +264,12 @@
   "how.sampleText": "Usa al menos 10 unidades y un peso de muestra de al menos 200 veces la precisión de la báscula. Si la muestra no alcanza, la app sugiere cuántas unidades usar, pero no bloquea. Los folletos muy ligeros solo piden más unidades.",
   "pwa.update": "Nueva versión disponible",
   "pwa.reload": "Recargar",
-  "ios.banner": "Añade a la pantalla de inicio para conservar tus datos."
+  "ios.banner": "Añade a la pantalla de inicio para conservar tus datos.",
+  "drive.err.invalid": "El archivo de Drive no es un archivo PubCount válido. Tus datos no se modificaron.",
+  "drive.err.tooNew": "El archivo de Drive fue creado por una versión más nueva de PubCount. Actualiza la app. Tus datos no se modificaron.",
+  "drive.err.notJson": "No se puede leer el archivo de Drive. Tus datos no se modificaron.",
+  "drive.err.network": "No se pudo acceder a Google Drive. Tus datos están seguros y la sincronización se reintentará.",
+  "drive.err.cancelled": "El inicio de sesión de Google se cerró o se bloqueó. No se conectó nada.",
+  "drive.err.backupFailed": "No se pudo respaldar tus datos actuales, así que no se cambió nada.",
+  "drive.err.generic": "Falló la sincronización con Drive. Tus datos están seguros y se reintentará."
 }

@@ -47,3 +47,14 @@ export async function saveDataset(ds: Dataset): Promise<boolean> {
 export async function requestPersistentStorage(): Promise<boolean> {
   try { return (await navigator.storage?.persist?.()) ?? false; } catch { return false; }
 }
+
+// NOTE: device-only Drive link; never part of the dataset and never holds the access token.
+export type DriveState = { fileId?: string; version?: string; lastSyncAt?: string; connected: boolean };
+
+export async function loadDriveState(): Promise<DriveState> {
+  try { return (await get<DriveState>('drive', kv())) ?? { connected: false }; } catch { return { connected: false }; }
+}
+
+export async function saveDriveState(s: DriveState): Promise<boolean> {
+  try { await set('drive', s, kv()); return true; } catch { return false; }
+}
